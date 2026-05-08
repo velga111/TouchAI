@@ -144,7 +144,6 @@ export interface AiRequestOptions {
     stream?: boolean;
     signal?: AbortSignal;
     tools?: AiToolDefinition[];
-    maxTokens?: number;
     attachmentRequestIndex?: number;
     onAttachmentManifestResolved?: (
         request: AttachmentDeliveryManifestRequest

@@ -258,7 +258,6 @@ export abstract class AiSdkProviderBase implements AiProvider {
             messages,
             tools: buildToolSet(options.tools),
             abortSignal: options.signal,
-            maxOutputTokens: options.maxTokens,
             providerOptions: this.getStreamProviderOptions(options),
             includeRawChunks: this.shouldIncludeRawChunks(),
             // 禁用 AI SDK 内部重试，由应用层 runtime 统一管理重试与 UI 反馈

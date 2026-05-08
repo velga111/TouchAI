@@ -331,7 +331,6 @@ export class AiRequestExecutor {
         messages: AiMessage[],
         tools?: AiToolDefinition[],
         signal?: AbortSignal,
-        maxTokens?: number,
         attachmentRequestIndex?: number,
         onAttachmentManifestResolved?: RequestExecutionCallbacks['onAttachmentManifestResolved']
     ): AsyncGenerator<AiStreamChunk, void, unknown> {
@@ -344,7 +343,6 @@ export class AiRequestExecutor {
             messages,
             tools,
             signal,
-            maxTokens,
             attachmentRequestIndex,
             onAttachmentManifestResolved,
         })) {
@@ -569,7 +567,6 @@ export class AiRequestExecutor {
             runtime.messages,
             runtime.tools,
             options.signal,
-            runtime.activeModel.output_limit ?? undefined,
             runtime.iteration,
             options.onAttachmentManifestResolved
         );
