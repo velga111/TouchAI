@@ -20,7 +20,7 @@
                 :name="selectedModel?.name || activeModel?.name || 'model'"
                 class="border-2 border-gray-300 transition-colors hover:border-gray-400"
             />
-            <img v-else :src="logoWord" alt="search" class="h-8 w-15 select-none" />
+            <img v-else :src="logo" alt="TouchAI" class="h-8 w-8 object-contain select-none" />
         </div>
 
         <div
@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-    import logoWord from '@assets/logo-word.svg';
+    import logo from '@assets/logo.svg';
     import ModelLogo from '@components/ModelLogo.vue';
     import { EditorContent } from '@tiptap/vue-3';
     import { onMounted, onUnmounted, ref, toRefs, watch } from 'vue';
