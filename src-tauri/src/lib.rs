@@ -59,9 +59,6 @@ pub fn run() {
         })
         .invoke_handler(commands::invoke_handler());
 
-    #[cfg(all(feature = "mcp-bridge", debug_assertions))]
-    let builder = builder.plugin(tauri_plugin_mcp_bridge::init());
-
     let app_result = builder
         .setup(|app| {
             if let Err(err) = setup::setup_app(app) {

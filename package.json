@@ -12,7 +12,6 @@
         "build": "vue-tsc --noEmit && vite build",
         "preview": "vite preview",
         "tauri": "tauri",
-        "tauri:dev:mcp": "tauri dev --features mcp-bridge",
         "test": "vitest",
         "test:ui": "vitest --ui",
         "test:run": "vitest run --passWithNoTests",

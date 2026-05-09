@@ -40,7 +40,6 @@ tauri-plugin-fs = "2"
 tauri-plugin-process = "2"
 tauri-plugin-http = "2"
 tauri-plugin-shell = "2"
-tauri-plugin-mcp-bridge = { version = "0.8", optional = true }
 raw-window-handle = "0.6"
 tokio = { version = "1", features = ["full"] }
 sqlx = { version = "0.8.6", default-features = false, features = ["sqlite", "runtime-tokio"] }
@@ -54,9 +53,6 @@ reqwest = { version = "0.12", features = ["json", "stream", "blocking"] }
 futures = "0.3"
 clipboard-rs = "0.2.4"
 html5gum = { version = "0.8.3", default-features = false }
-
-[features]
-mcp-bridge = ["dep:tauri-plugin-mcp-bridge"]
 
 [profile.release]
 codegen-units = 1
