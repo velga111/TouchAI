@@ -1,11 +1,11 @@
-<p align="center">中文 | <a href="./README.en.md">English</a></p>
+<p align="center"><a href="./README.md">中文</a> | English</p>
 
 <p align="center">
   <img src="docs/images/logo-with-text.svg" alt="TouchAI logo" width="360" />
 </p>
 
 <p align="center">
-  一触即达的桌面效率Agent
+  Your desktop agent, one shortcut away.
 </p>
 
 <p align="center">
@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  一触即达 · 桌面上下文 · MCP · BYOK
+  One shortcut · Desktop context · MCP · BYOK
 </p>
 
 <p align="center">
@@ -24,46 +24,48 @@
 
 ---
 
-### 功能特性
+### Features
 
-- **一触即达** - `Alt+Space` 召之即来挥之即去，不打破工作流
-- **桌面上下文** - 文件、屏幕、剪贴板智能感知
-- **MCP支持** - 支持MCP工具拓展
-- **BYOK** - 无厂商锁定，自由切换提供商和模型
+- **One shortcut away** - `Alt+Space` opens fast and gets out of your way
+- **Desktop context** - aware of files, screen, and clipboard
+- **MCP support** - extend capabilities with MCP tools
+- **BYOK** - bring your own provider and model
 
-### 下载使用
-在 [Releases](https://github.com/TouchAI-org/TouchAI/releases) 下载最新安装包。
+### Download
 
-### 开发贡献
+Download the latest installer from [Releases](https://github.com/TouchAI-org/TouchAI/releases).
 
-在进行开发前请确保已安装`Rust`、`Node.js`环境，并安装`pnpm`。
+### Development & Contributing
 
-#### 开发
+Make sure `Rust`, `Node.js`, and `pnpm` are installed before development.
+
+#### Development
 
 ```bash
 pnpm install
 pnpm tauri dev
 ```
 
-#### 打包
+#### Build
+
 ```bash
 pnpm tauri build
 ```
 
-如果你想参与 TouchAI 的开发，请先阅读 [contributing docs](./CONTRIBUTING.md)。
+Read the [contributing docs](./CONTRIBUTING.md) before opening a pull request.
 
-### 文档
+### Docs
 
-更多说明请查看项目文档和仓库代码。
+For more details, browse the project docs and source code.
 
 ---
 
-### 贡献者
+### Contributors
 
 <a href="https://github.com/TouchAI-org/TouchAI/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=TouchAI-org/TouchAI" alt="Contributors" />
 </a>
 
-### Star 历史
+### Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=TouchAI-org/TouchAI&type=Date)](https://star-history.com/#TouchAI-org/TouchAI&Date)
