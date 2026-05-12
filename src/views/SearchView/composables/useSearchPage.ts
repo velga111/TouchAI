@@ -6,11 +6,11 @@ import { useAlert } from '@composables/useAlert';
 import { useWindowResize } from '@composables/useWindowResize';
 import { AppEvent, eventService } from '@services/EventService';
 import { native } from '@services/NativeService';
+import { initNotificationPermission, notify } from '@services/NotificationService';
 import type { ModelDropdownData, ModelDropdownPopupItem } from '@services/PopupService';
 import { popupManager } from '@services/PopupService';
 import { runStartupTasks } from '@services/StartupService';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { sendNotification } from '@tauri-apps/plugin-notification';
 import { nextTick, onMounted, onUnmounted, type Ref, ref, watch } from 'vue';
 
 import { useSettingsStore } from '@/stores/settings';
@@ -494,7 +494,7 @@ export function useSearchPageLifecycle(options: UseSearchPageLifecycleOptions) {
                 message = '不支持的按键，请在设置中更换';
             }
 
-            sendNotification({
+            notify({
                 title: 'TouchAI - 快捷键注册失败',
                 body: message,
             });
@@ -531,6 +531,7 @@ export function useSearchPageLifecycle(options: UseSearchPageLifecycleOptions) {
             .catch(() => true);
         await syncWindowPinStateSafely('initialize');
         await initFocusListener();
+        await initNotificationPermission();
         await runStartupTasks();
     }
 
