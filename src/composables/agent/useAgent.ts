@@ -186,7 +186,7 @@ export function useAgent(options: UseAiRequestOptions = {}) {
         modelId?: string,
         providerId?: number
     ) {
-        if (!prompt.trim()) {
+        if (!prompt.trim() && attachments.length === 0) {
             error.value = new Error('Prompt cannot be empty');
             return;
         }

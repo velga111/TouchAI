@@ -112,6 +112,7 @@ interface CreateSearchKeyboardRouterOptions {
     getActiveSurface: () => SearchKeyboardSurface;
     hasActivePopupWindowFocus: () => boolean;
     getQueryText: () => string;
+    hasAttachments: () => boolean;
     isQuickSearchOpen: () => boolean;
     hasQuickSearchHighlight: () => boolean;
     shouldTriggerQuickSearch: (query: string) => boolean;
@@ -140,6 +141,7 @@ interface CreateSearchKeyboardRouterOptions {
 export interface UseSearchKeyboardOptions {
     viewReady: Ref<boolean>;
     queryText: Ref<string>;
+    attachments: Ref<unknown[]>;
     cursorContext: Ref<SearchCursorContext>;
     modelOverride: Ref<SearchModelOverride>;
     modelDropdownState: Ref<SearchModelDropdownState>;
@@ -576,6 +578,7 @@ export function createSearchKeyboardRouter(options: CreateSearchKeyboardRouterOp
         getActiveSurface,
         hasActivePopupWindowFocus,
         getQueryText,
+        hasAttachments,
         isQuickSearchOpen,
         hasQuickSearchHighlight,
         shouldTriggerQuickSearch,
@@ -722,7 +725,7 @@ export function createSearchKeyboardRouter(options: CreateSearchKeyboardRouterOp
                     return false;
                 }
 
-                if (queryText.trim()) {
+                if (queryText.trim() || hasAttachments()) {
                     runKeyboardEffect(onSubmit);
                 }
                 return true;
@@ -730,7 +733,7 @@ export function createSearchKeyboardRouter(options: CreateSearchKeyboardRouterOp
         }
 
         if (getActiveSurface() === 'search-surface' && input.key === 'Enter' && !input.shiftKey) {
-            if (queryText.trim()) {
+            if (queryText.trim() || hasAttachments()) {
                 runKeyboardEffect(onSubmit);
             }
             return true;
@@ -751,6 +754,7 @@ export function createSearchKeydownHandler(options: UseSearchKeyboardOptions) {
     const {
         viewReady,
         queryText,
+        attachments,
         cursorContext,
         modelOverride,
         modelDropdownState,
@@ -805,6 +809,7 @@ export function createSearchKeydownHandler(options: UseSearchKeyboardOptions) {
         },
         hasActivePopupWindowFocus,
         getQueryText: () => queryText.value,
+        hasAttachments: () => attachments.value.length > 0,
         isQuickSearchOpen: () => isQuickSearchOpen.value,
         hasQuickSearchHighlight: () => controller.isQuickSearchItemHighlighted(),
         shouldTriggerQuickSearch,
