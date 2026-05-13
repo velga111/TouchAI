@@ -264,7 +264,7 @@ export function createSearchKeyboardRouter(options: CreateSearchKeyboardRouterOp
         }
 
         if (getActiveSurface() === 'search-surface' && input.key === 'Enter' && !input.shiftKey) {
-                if (queryText.trim() || hasAttachments()) {
+            if (queryText.trim() || hasAttachments()) {
                 runKeyboardEffect(onSubmit);
             }
             return true;

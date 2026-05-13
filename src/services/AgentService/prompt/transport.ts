@@ -123,7 +123,10 @@ async function buildUserPromptMessage(options: {
 
     if (hasAttachments && !hasDraftInsertionOffsets) {
         if (hasText) {
-            content = [{ type: 'text', text: options.prompt }, ...attachmentParts] as AiContentPart[];
+            content = [
+                { type: 'text', text: options.prompt },
+                ...attachmentParts,
+            ] as AiContentPart[];
         } else {
             content = attachmentParts;
         }
