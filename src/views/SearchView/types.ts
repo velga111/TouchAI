@@ -26,6 +26,7 @@ export interface SearchBarHandle {
     getModelDropdownContext: () => SearchModelDropdownContext;
     focus: () => void | Promise<void>;
     loadActiveModel: () => void | Promise<void>;
+    insertTextAtCursor: (text: string) => void;
 }
 
 export interface QuickSearchHandle {

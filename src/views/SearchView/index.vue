@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
     // Copyright (c) 2026. Qian Cheng. Licensed under GPL v3.
 
     import { useSessionStatus } from '@composables/useSessionStatus';
@@ -384,7 +384,7 @@
     /**
      * 统一处理页面捕获到的粘贴事件。
      */
-    function handlePagePaste(event: ClipboardEvent) {
+    async function handlePagePaste(event: ClipboardEvent) {
         if (pendingToolApproval.value) {
             event.preventDefault();
             event.stopPropagation();
@@ -394,6 +394,26 @@
 
         event.preventDefault();
         event.stopPropagation();
+
+        // 读取剪贴板内容
+        const payload = await clipboardService.readExplicitPastePayload();
+        if (!payload) {
+            return;
+        }
+
+        // 判断是否只有纯文本（无图片、文件）
+        // 注意：fragments 可能包含纯文本片段，这种情况也视为纯文本
+        const hasOnlyText = !payload.imagePaths?.length && !payload.filePaths?.length;
+
+        if (hasOnlyText && payload.text) {
+            const trimmedText = payload.text.trim();
+            if (trimmedText) {
+                searchBar.value?.insertTextAtCursor(trimmedText);
+            }
+            return;
+        }
+
+        // 否则走原有的复杂流程（处理 fragments、图片等）
         void handlePaste();
     }
 
