@@ -133,7 +133,7 @@ async function buildUserPromptMessage(options: {
     } else if (hasAttachments) {
         content = attachmentParts;
     } else {
-        content = options.prompt || '请分析这些附件';
+        content = options.prompt;
     }
 
     return {
