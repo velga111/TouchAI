@@ -27,6 +27,13 @@ export interface SearchBarHandle {
     focus: () => void | Promise<void>;
     loadActiveModel: () => void | Promise<void>;
     insertTextAtCursor: (text: string) => void;
+    insertAttachmentAtCursor: (
+        attachmentId: string,
+        fileName: string,
+        fileType: 'image' | 'file',
+        preview?: string,
+        alias?: string
+    ) => void;
 }
 
 export interface QuickSearchHandle {

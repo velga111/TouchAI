@@ -51,6 +51,7 @@
     import type { Index } from '@/services/AgentService/infrastructure/attachments';
 
     import { type ModelCapabilities, useSearchInput } from './composables/useSearchLogic';
+    import { insertAttachmentTag } from './tags/attachment';
     import type { SearchCursorContext, SearchModelOverride } from './types';
     import { isSearchTagDomTarget, resolveMouseEventTarget } from './utils/tiptap';
 
@@ -284,6 +285,34 @@
         }
     }
 
+    function insertAttachmentAtCursor(
+        attachmentId: string,
+        fileName: string,
+        fileType: 'image' | 'file',
+        preview?: string,
+        alias?: string
+    ) {
+        const ed = editor.value;
+        if (!ed) return;
+
+        try {
+            const cursorPos = ed.view.state.selection.from;
+            insertAttachmentTag(
+                ed,
+                {
+                    attachmentId,
+                    fileName,
+                    fileType,
+                    preview: preview || undefined,
+                    alias: alias || '',
+                },
+                { textOffset: cursorPos }
+            );
+        } catch (error) {
+            console.error('Failed to insert attachment at cursor:', error);
+        }
+    }
+
     defineExpose({
         prefetchModelDropdownData,
         invalidateModelDropdownData,
@@ -294,6 +323,7 @@
         focus,
         loadActiveModel,
         insertTextAtCursor,
+        insertAttachmentAtCursor,
     });
 </script>
 

@@ -127,7 +127,7 @@
         attachments,
     });
 
-    const { clearDraft, handlePaste, importClipboardPayload } = useSearchDraftController({
+    const { clearDraft, importClipboardPayload } = useSearchDraftController({
         queryText,
         attachments,
         modelOverride,
@@ -381,9 +381,6 @@
         approvalAttentionToken.value += 1;
     }
 
-    /**
-     * 统一处理页面捕获到的粘贴事件。
-     */
     async function handlePagePaste(event: ClipboardEvent) {
         if (pendingToolApproval.value) {
             event.preventDefault();
@@ -395,14 +392,9 @@
         event.preventDefault();
         event.stopPropagation();
 
-        // 读取剪贴板内容
         const payload = await clipboardService.readExplicitPastePayload();
-        if (!payload) {
-            return;
-        }
+        if (!payload) return;
 
-        // 判断是否只有纯文本（无图片、文件）
-        // 注意：fragments 可能包含纯文本片段，这种情况也视为纯文本
         const hasOnlyText = !payload.imagePaths?.length && !payload.filePaths?.length;
 
         if (hasOnlyText && payload.text) {
@@ -413,8 +405,32 @@
             return;
         }
 
-        // 否则走原有的复杂流程（处理 fragments、图片等）
-        void handlePaste();
+        if (payload.text?.trim()) {
+            searchBar.value?.insertTextAtCursor(payload.text.trim());
+        }
+
+        const attachmentsToInsert: Array<{ path: string; type: 'image' | 'file' }> = [];
+        for (const imagePath of payload.imagePaths ?? []) {
+            attachmentsToInsert.push({ path: imagePath, type: 'image' });
+        }
+        for (const filePath of payload.filePaths ?? []) {
+            attachmentsToInsert.push({ path: filePath, type: 'file' });
+        }
+
+        for (const { path, type } of attachmentsToInsert) {
+            try {
+                const attachment = await createAttachmentFromClipboardPath(type, path);
+                attachments.value.push(attachment);
+                searchBar.value?.insertAttachmentAtCursor(
+                    attachment.id,
+                    attachment.name || (type === 'image' ? 'Image' : 'File'),
+                    type,
+                    attachment.preview
+                );
+            } catch (error) {
+                console.error(`Failed to insert ${type} attachment:`, error);
+            }
+        }
     }
 
     /**
