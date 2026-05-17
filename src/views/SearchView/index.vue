@@ -186,7 +186,7 @@
         attachments,
     });
 
-    const { clearDraft, handlePaste, importClipboardPayload } = useSearchDraftController({
+    const { clearDraft, importClipboardPayload } = useSearchDraftController({
         queryText,
         attachments,
         modelOverride,
@@ -513,10 +513,7 @@
         approvalAttentionToken.value += 1;
     }
 
-    /**
-     * 统一处理页面捕获到的粘贴事件。
-     */
-    function handlePagePaste(event: ClipboardEvent) {
+    async function handlePagePaste(event: ClipboardEvent) {
         if (pendingToolApproval.value) {
             event.preventDefault();
             event.stopPropagation();
@@ -526,7 +523,46 @@
 
         event.preventDefault();
         event.stopPropagation();
-        void handlePaste();
+
+        const payload = await clipboardService.readExplicitPastePayload();
+        if (!payload) return;
+
+        const hasOnlyText = !payload.imagePaths?.length && !payload.filePaths?.length;
+
+        if (hasOnlyText && payload.text) {
+            const trimmedText = payload.text.trim();
+            if (trimmedText) {
+                searchBar.value?.insertTextAtCursor(trimmedText);
+            }
+            return;
+        }
+
+        if (payload.text?.trim()) {
+            searchBar.value?.insertTextAtCursor(payload.text.trim());
+        }
+
+        const attachmentsToInsert: Array<{ path: string; type: 'image' | 'file' }> = [];
+        for (const imagePath of payload.imagePaths ?? []) {
+            attachmentsToInsert.push({ path: imagePath, type: 'image' });
+        }
+        for (const filePath of payload.filePaths ?? []) {
+            attachmentsToInsert.push({ path: filePath, type: 'file' });
+        }
+
+        for (const { path, type } of attachmentsToInsert) {
+            try {
+                const attachment = await createAttachmentFromClipboardPath(type, path);
+                attachments.value.push(attachment);
+                searchBar.value?.insertAttachmentAtCursor(
+                    attachment.id,
+                    attachment.name || (type === 'image' ? 'Image' : 'File'),
+                    type,
+                    attachment.preview
+                );
+            } catch (error) {
+                console.error(`Failed to insert ${type} attachment:`, error);
+            }
+        }
     }
 
     /**

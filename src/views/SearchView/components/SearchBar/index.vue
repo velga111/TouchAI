@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   - Copyright (c) 2026. Qian Cheng. Licensed under GPL v3
   -->
 
@@ -51,6 +51,7 @@
     import type { Index } from '@/services/AgentService/infrastructure/attachments';
 
     import { type ModelCapabilities, useSearchInput } from './composables/useSearchLogic';
+    import { insertAttachmentTag } from './tags/attachment';
     import type { SearchCursorContext, SearchModelOverride } from './types';
     import { isSearchTagDomTarget, resolveMouseEventTarget } from './utils/tiptap';
 
@@ -256,6 +257,68 @@
         destroyEditor();
     });
 
+    /**
+     * 在光标位置插入文本（使用 ProseMirror 底层 API）。
+     * @param text 要插入的文本
+     */
+    function insertTextAtCursor(text: string) {
+        const ed = editor.value;
+        if (!ed || !text) return;
+
+        try {
+            // 使用 ProseMirror 底层 API 精确控制插入位置
+            const { view } = ed;
+            const { state } = view;
+            const { from, to } = state.selection;
+
+            let tr = state.tr;
+
+            // 删除选中的内容（如果有）
+            if (from !== to) {
+                tr = tr.delete(from, to);
+            }
+
+            // 将换行符替换为空格，避免创建新段落
+            const normalizedText = text.replace(/\n/g, ' ');
+
+            // 在光标位置插入纯文本
+            tr = tr.insertText(normalizedText, tr.selection.from);
+
+            // 应用 transaction
+            view.dispatch(tr);
+        } catch (error) {
+            console.error('Failed to insert text at cursor:', error);
+        }
+    }
+
+    function insertAttachmentAtCursor(
+        attachmentId: string,
+        fileName: string,
+        fileType: 'image' | 'file',
+        preview?: string,
+        alias?: string
+    ) {
+        const ed = editor.value;
+        if (!ed) return;
+
+        try {
+            const cursorPos = ed.view.state.selection.from;
+            insertAttachmentTag(
+                ed,
+                {
+                    attachmentId,
+                    fileName,
+                    fileType,
+                    preview: preview || undefined,
+                    alias: alias || '',
+                },
+                { textOffset: cursorPos }
+            );
+        } catch (error) {
+            console.error('Failed to insert attachment at cursor:', error);
+        }
+    }
+
     defineExpose({
         prefetchModelDropdownData,
         invalidateModelDropdownData,
@@ -265,6 +328,8 @@
         getModelDropdownContext,
         focus,
         loadActiveModel,
+        insertTextAtCursor,
+        insertAttachmentAtCursor,
         captureInputHistorySnapshot,
         restoreInputHistorySnapshot,
     });
