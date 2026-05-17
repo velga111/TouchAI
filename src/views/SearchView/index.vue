@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
     // Copyright (c) 2026. Qian Cheng. Licensed under GPL v3.
 
     import { useSessionStatus } from '@composables/useSessionStatus';
@@ -443,6 +443,7 @@
     useSearchKeyboard({
         viewReady,
         queryText,
+        attachments,
         cursorContext,
         modelOverride,
         modelDropdownState,
