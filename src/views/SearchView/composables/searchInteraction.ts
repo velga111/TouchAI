@@ -897,7 +897,7 @@ export function createSearchKeyboardRouter(options: CreateSearchKeyboardRouterOp
             }
         }
 
-          if (getActiveSurface() === 'search-surface' && !isQuickSearchOpen()) {
+        if (getActiveSurface() === 'search-surface' && !isQuickSearchOpen()) {
             if (input.key === 'ArrowUp') {
                 if (isMultiLineCursor() && !isCursorAtTextStart()) {
                     return false;
