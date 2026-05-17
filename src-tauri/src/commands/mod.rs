@@ -15,7 +15,8 @@ pub mod window;
 ///
 /// 这里按能力域集中注册命令，目的是让前端只有一个稳定的调用入口，
 /// 同时把“窗口控制 / 系统集成 / 搜索 / 工具执行”等能力明确收口在命令层。
-pub fn invoke_handler() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool + Send + Sync + 'static {
+pub fn invoke_handler<R: tauri::Runtime>(
+) -> impl Fn(tauri::ipc::Invoke<R>) -> bool + Send + Sync + 'static {
     tauri::generate_handler![
         window::hide_search_window,
         window::set_search_surface_hide_on_app_blur,
@@ -49,6 +50,7 @@ pub fn invoke_handler() -> impl Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool + Sen
         database::database_export_backup,
         database::database_import_backup,
         paths::get_app_directory_path,
+        paths::get_runtime_info,
         built_in_tools::built_in_tools_execute_bash,
         built_in_tools::built_in_tools_cancel_bash,
         mcp::mcp_connect_server,

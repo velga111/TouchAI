@@ -28,3 +28,11 @@ assets/**/*
 data/**/*
 nul
 cache/**/*
+.e2e-runtime/
+.e2e-tools/
+coverage/
+.coverage/
+tmp-cargo-target/
+tmp-cargo-temp/
+rust-target/
+rust-temp/
