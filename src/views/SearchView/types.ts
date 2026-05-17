@@ -1,7 +1,7 @@
 ﻿import type { ModelWithProvider } from '@database/queries/models';
 
 import type { Index } from '@/services/AgentService/infrastructure/attachments';
-import type { SessionMessage } from '@/types/session';
+import type { InputHistorySnapshot, SessionMessage } from '@/types/session';
 
 import type {
     SearchCursorContext,
@@ -26,7 +26,8 @@ export interface SearchBarHandle {
     getModelDropdownContext: () => SearchModelDropdownContext;
     focus: () => void | Promise<void>;
     loadActiveModel: () => void | Promise<void>;
-    insertTextAtCursor: (text: string) => void;
+
+  insertTextAtCursor: (text: string) => void;
     insertAttachmentAtCursor: (
         attachmentId: string,
         fileName: string,
@@ -34,6 +35,9 @@ export interface SearchBarHandle {
         preview?: string,
         alias?: string
     ) => void;
+  
+    captureInputHistorySnapshot: () => InputHistorySnapshot;
+    restoreInputHistorySnapshot: (snapshot: InputHistorySnapshot) => string;
 }
 
 export interface QuickSearchHandle {
@@ -75,6 +79,7 @@ export interface SearchPageController {
 export interface PendingRequest {
     query: string;
     attachments: Index[];
+    inputSnapshot?: InputHistorySnapshot;
     modelId?: string;
     providerId?: number;
 }
