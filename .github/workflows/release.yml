@@ -52,8 +52,8 @@ jobs:
                   RELEASE_VERSION: ${{ github.event.inputs.version }}
               run: node scripts/ci/resolve-release-metadata.mjs
 
-    publish-windows:
-        name: Publish Windows prerelease
+    publish-release:
+        name: Publish prerelease release
         needs: resolve
         permissions:
             contents: write
@@ -65,4 +65,5 @@ jobs:
             tag: ${{ needs.resolve.outputs.tag }}
             prerelease: ${{ needs.resolve.outputs.prerelease }}
             target-commitish: ${{ github.sha }}
+            deploy-production: ${{ github.ref_name == 'main' }}
         secrets: inherit

@@ -8,6 +8,7 @@
 
     import { APP_UPDATE_CHANNELS, appUpdateChannelLabel } from '@/config/appUpdate';
     import { APP_PRODUCT_CONFIG } from '@/config/product';
+    import { preferredAppUpdateDownload } from '@/services/AppUpdateService/downloads';
 
     defineOptions({
         name: 'SettingsAboutSection',
@@ -43,14 +44,10 @@
     );
     const latestUpdate = computed(() => updateState.value.latestUpdate);
     const updateRequirement = computed(() => updateState.value.updateRequirement);
-    const directDownloadUrl = computed(() => {
-        const downloads = latestUpdate.value?.downloads ?? [];
-        return (
-            downloads.find((download) => download.kind === 'installer')?.url ??
-            downloads.find((download) => download.kind === 'portable')?.url ??
-            null
-        );
-    });
+    const directDownload = computed(() =>
+        preferredAppUpdateDownload(latestUpdate.value?.downloads ?? [])
+    );
+    const directDownloadUrl = computed(() => directDownload.value?.url ?? null);
     const updateDownloadUrl = computed(
         () => directDownloadUrl.value ?? latestUpdate.value?.releaseUrl ?? links.releasesUrl
     );
@@ -67,15 +64,15 @@
             ''
     );
     const updateSummaryText = computed(() => {
-        if (visibleUpdate.value?.fileName) {
-            return latestUpdate.value?.version
-                ? `${visibleUpdate.value.fileName} · 最新版本 ${latestUpdate.value.version}`
-                : visibleUpdate.value.fileName;
+        if (latestUpdate.value?.version) {
+            return `最新版本 ${latestUpdate.value.version} · ${currentChannelLabel.value}`;
         }
 
-        return latestUpdate.value?.version
-            ? `最新版本 ${latestUpdate.value.version} · ${currentChannelLabel.value}`
-            : `GitHub Releases · ${currentChannelLabel.value}`;
+        if (updateRequirement.value?.minimumSupportedVersion) {
+            return `最低支持版本 ${updateRequirement.value.minimumSupportedVersion} · ${currentChannelLabel.value}`;
+        }
+
+        return `GitHub Releases · ${currentChannelLabel.value}`;
     });
     const isChecking = computed(() => updateState.value.status === 'checking');
     const isDownloading = computed(() => updateState.value.status === 'downloading');

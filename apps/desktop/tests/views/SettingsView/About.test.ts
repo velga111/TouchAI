@@ -24,8 +24,8 @@ const latestUpdate = {
     downloads: [
         {
             kind: 'installer',
-            name: 'TouchAI-0.2.0-Setup.exe',
-            url: `${APP_PRODUCT_CONFIG.repository.url}/releases/download/v0.2.0/TouchAI-0.2.0-Setup.exe`,
+            name: 'TouchAI-0.2.0-windows-Setup.exe',
+            url: `${APP_PRODUCT_CONFIG.repository.url}/releases/download/v0.2.0/TouchAI-0.2.0-windows-Setup.exe`,
             sizeBytes: 12_000_000,
         },
     ],
@@ -102,6 +102,7 @@ describe('Settings About update section', () => {
 
         expect(wrapper.text()).toContain('发现新版本 0.2.0');
         expect(wrapper.text()).toContain('最新版本 0.2.0');
+        expect(wrapper.text()).not.toContain(updateState.availableUpdate!.fileName);
 
         await wrapper.get('[data-testid="settings-update-download"]').trigger('click');
         expect(appUpdateServiceMock.download).toHaveBeenCalledTimes(1);

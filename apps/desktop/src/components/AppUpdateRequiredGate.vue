@@ -6,6 +6,7 @@
     import { computed, onMounted, onUnmounted, ref } from 'vue';
 
     import { APP_PRODUCT_CONFIG } from '@/config/product';
+    import { preferredAppUpdateDownload } from '@/services/AppUpdateService/downloads';
 
     defineOptions({
         name: 'AppUpdateRequiredGate',
@@ -33,14 +34,10 @@
     const releaseNotes = computed(
         () => visibleUpdate.value?.notes?.trim() || latestUpdate.value?.releaseNotes?.trim() || ''
     );
-    const directDownloadUrl = computed(() => {
-        const downloads = latestUpdate.value?.downloads ?? [];
-        return (
-            downloads.find((download) => download.kind === 'installer')?.url ??
-            downloads.find((download) => download.kind === 'portable')?.url ??
-            null
-        );
-    });
+    const directDownload = computed(() =>
+        preferredAppUpdateDownload(latestUpdate.value?.downloads ?? [])
+    );
+    const directDownloadUrl = computed(() => directDownload.value?.url ?? null);
     const releaseDownloadUrl = computed(
         () =>
             directDownloadUrl.value ??
