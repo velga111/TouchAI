@@ -115,6 +115,7 @@
         historyPrefetch: [anchorElement: HTMLElement | null];
         dragStart: [];
         dragEnd: [];
+        latestContentVisibilityChange: [visible: boolean];
     }>();
 
     const conversationContainer = ref<HTMLElement | null>(null);
@@ -179,12 +180,21 @@
         return conversationToolbar.value?.getHistoryAnchor() ?? null;
     }
 
+    function isLatestContentVisible() {
+        return isScrolledToBottom(conversationContainer.value);
+    }
+
     defineExpose({
         focus,
         revealLatestContent,
         scrollByDelta,
         getHistoryAnchor,
+        isLatestContentVisible,
     });
+
+    function emitLatestContentVisibility() {
+        emit('latestContentVisibilityChange', isLatestContentVisible());
+    }
 
     function handleRegenerateMessage(messageId: string) {
         emit('regenerateMessage', messageId);
@@ -265,6 +275,7 @@
         }
 
         lastScrollTop.value = currentScrollTop;
+        emitLatestContentVisibility();
     }
 
     function syncToBottom() {
@@ -272,6 +283,7 @@
         lastAutoScrollAt.value = Date.now();
         conversationContainer.value.scrollTop = conversationContainer.value.scrollHeight;
         lastScrollTop.value = conversationContainer.value.scrollTop;
+        emitLatestContentVisibility();
     }
 
     function smoothScrollToBottom() {
@@ -282,6 +294,7 @@
             behavior: 'smooth',
         });
         lastScrollTop.value = conversationContainer.value.scrollTop;
+        emitLatestContentVisibility();
     }
 
     /**
@@ -295,6 +308,7 @@
 
         const atBottom = isScrolledToBottom(conversationContainer.value);
         showScrollToBottom.value = hasScrollbar() && !atBottom;
+        emitLatestContentVisibility();
     }
 
     function scrollToUserMessageTop(messageId: string, gap = USER_MESSAGE_SCROLL_GAP): boolean {
@@ -338,6 +352,7 @@
             isAutoScrollEnabled.value = false;
         }
         refreshScrollToBottomVisibility();
+        emitLatestContentVisibility();
     }
 
     // 滚动到底部
@@ -405,6 +420,7 @@
                     isAutoScrollEnabled.value = false;
                     nextTick(() => {
                         refreshScrollToBottomVisibility();
+                        emitLatestContentVisibility();
                     });
                 }
             }
@@ -423,6 +439,7 @@
 
             await nextTick();
             refreshScrollToBottomVisibility();
+            emitLatestContentVisibility();
         },
         { immediate: true }
     );
@@ -435,11 +452,13 @@
             scrollTop.value = conversationContainer.value.scrollTop;
             scrollHeight.value = conversationContainer.value.scrollHeight;
             clientHeight.value = conversationContainer.value.clientHeight;
+            emitLatestContentVisibility();
         }
 
         if (messageListRef.value) {
             messageListObserver = new ResizeObserver(() => {
                 if (!shouldAutoScrollOnOutput()) {
+                    emitLatestContentVisibility();
                     return;
                 }
 
