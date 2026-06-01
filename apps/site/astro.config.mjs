@@ -38,7 +38,7 @@ export default defineConfig({
 					items: [
 						{ label: '内置工具', slug: 'features/built-in-tools' },
 						{ label: '文件搜索', slug: 'features/file-search' },
-						{ label: '代码与命令', slug: 'features/code-and-command' },
+						{ label: '终端操作', slug: 'features/code-and-command' },
 						{ label: '模型升级', slug: 'features/upgrade-model' },
 					],
 				},
