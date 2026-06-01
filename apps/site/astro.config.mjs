@@ -23,6 +23,12 @@ export default defineConfig({
 	integrations: [
 		starlight({
 			title: 'TouchAI',
+			logo: {
+				light: './src/assets/touchai-docs-logo-light.svg',
+				dark: './src/assets/touchai-docs-logo-dark.svg',
+				alt: 'TouchAI',
+				replacesTitle: true,
+			},
 			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/TouchAI-org/TouchAI' }],
 			sidebar: [
 				{

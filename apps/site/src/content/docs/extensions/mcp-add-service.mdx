@@ -1,13 +1,13 @@
 ---
 title: 添加服务
-description: 在 TouchAI 中添加并管理一个 MCP 服务
+description: 在 TouchAI 中添加、连接并验证一个 MCP 服务
 ---
 
 如果你想开始使用 MCP 扩展，可以直接在 **MCP 工具** 页面添加服务。
 
 ## 1. 寻找服务
 
-查找你想要的服务的官方文档明确其 MCP 引入规则。
+先查看目标服务的官方文档，确认它支持什么接入方式、需要哪些参数，以及是否有额外依赖。
 
 ![寻找 MCP 服务](/extensions/mcp-add-service/mcp-find-service.png)
 
@@ -15,36 +15,70 @@ description: 在 TouchAI 中添加并管理一个 MCP 服务
 
 进入应用 **设置**，在左侧导航中打开 **MCP 工具**。
 
- ![打开 MCP 工具页](/extensions/mcp-add-service/mcp-open-tool-page.png)
+![打开 MCP 工具页](/extensions/mcp-add-service/mcp-open-tool-page.png)
 
 ## 3. 新建服务器
 
 点击左下角的 **+ 添加 MCP 服务器**。
 
-创建后，左侧会出现新的服务项；右侧可以在 **配置 / 工具 / 日志** 三个页签中查看和管理它。
+创建后，左侧会出现新的服务项；右侧则可以在 **配置 / 工具 / 日志** 三个页签中查看和管理它。
 
- ![新建 MCP 服务](/extensions/mcp-add-service/mcp-new-service.png)
+![新建 MCP 服务](/extensions/mcp-add-service/mcp-new-service.png)
 
-## 4. 在页面里完成配置
+## 4. 填写配置
 
-在 **配置** 页签中：填写服务名称、选择传输类型并填写服务需要的必要信息。
+在 **配置** 页签中，填写这个服务需要的关键信息。
 
- ![添加 MCP 服务表单](/extensions/mcp-add-service/mcp-add-service-form.png)
+![添加 MCP 服务表单](/extensions/mcp-add-service/mcp-add-service-form.png)
 
 ## 5. 查看工具
 
-在 **工具** 页签中查看这个服务提供了哪些能力
+完成配置后，切到 **工具** 页签，查看这个服务已经暴露了哪些可用能力。
 
 ![查看 MCP 服务工具](/extensions/mcp-add-service/mcp-view-service-tools.png)
 
-## 6. 使用服务
+## 6. 在对话里使用服务
 
-在TouchAI 中，可以使用这个服务提供的能力。
+连接成功后，你就可以在 TouchAI 中继续使用这个服务提供的能力，把真实任务接进当前对话。
 
 ![使用 MCP 服务](/extensions/mcp-add-service/mcp-use-service.png)
 
 ## 7. 查看日志
 
-在 **日志** 页签中查看这个服务提供的日志。
+如果连接或调用过程中有异常，可以到 **日志** 页签查看服务日志，帮助你定位问题。
 
 ![查看 MCP 服务日志](/extensions/mcp-add-service/mcp-view-service-logs.png)
+
+## 如何确认已接入成功
+
+通常满足下面几点，就说明服务已经接入成功：
+
+- 左侧列表中可以看到这个服务
+- 服务状态正常，而不是报错或未连接
+- **工具** 页签能看到可用工具
+- 在对话中可以正常调用这些能力
+
+## 常见问题
+
+### 为什么服务连接不上？
+
+优先检查：
+
+- 地址或启动命令是否填写正确
+- 所需密钥、令牌或环境变量是否完整
+- 当前网络或本地依赖是否可用
+- 服务本身是否支持当前接入方式
+
+### 为什么工具列表是空的？
+
+可能是服务尚未成功连接，或者配置虽然保存了，但关键参数还不完整。
+
+### 日志里有报错时该怎么看？
+
+先看是“连接失败”“认证失败”还是“工具执行失败”，再回到配置页逐项检查对应参数。
+
+## 相关页面
+
+- [MCP 扩展](/extensions/mcp-tools/)
+- [热门服务](/extensions/mcp-popular-scenarios/)
+- [内置工具](/features/built-in-tools/)
