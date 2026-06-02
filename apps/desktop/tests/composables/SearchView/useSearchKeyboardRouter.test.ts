@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { createDefaultSearchKeybindings } from '@/config/searchKeybindings';
 import { createSearchKeyboardRouter } from '@/views/SearchView/composables/interaction/useSearchKeyboardRouter';
 
 async function flushAsyncWork() {
@@ -10,7 +11,7 @@ async function flushAsyncWork() {
 function createKeyboardRouter(
     overrides: Partial<Parameters<typeof createSearchKeyboardRouter>[0]> = {}
 ) {
-    const callbacks = {
+    const defaultCallbacks = {
         onPromptApprovalAttention: vi.fn(),
         onRejectApproval: vi.fn(),
         onApproveApproval: vi.fn(),
@@ -20,6 +21,12 @@ function createKeyboardRouter(
         onMoveQuickSearchSelection: vi.fn(),
         onOpenHighlightedQuickSearchItem: vi.fn(),
         onCloseQuickSearch: vi.fn(),
+        onQuickSearchPageUp: vi.fn(),
+        onQuickSearchPageDown: vi.fn(),
+        onQuickSearchContextMenu: vi.fn(),
+        onQuickSearchToggleView: vi.fn(),
+        onQuickSearchCollapse: vi.fn(),
+        onNavigateInputHistory: vi.fn(() => 'ignored' as const),
         onHideAllPopups: vi.fn(),
         onCancelRequest: vi.fn(),
         onClearModelOverride: vi.fn(),
@@ -27,27 +34,31 @@ function createKeyboardRouter(
         onClearSession: vi.fn(),
         onClearDraft: vi.fn(),
         onClearAll: vi.fn(),
-        onPrimaryShortcut: vi.fn(),
+        onSearchKeybindingAction: vi.fn(),
+    };
+    const routerOptions = {
+        getSearchKeybindings: () => createDefaultSearchKeybindings(),
+        getPendingApproval: () => null,
+        getActiveSurface: () => 'search-surface' as const,
+        hasActivePopupWindowFocus: () => false,
+        getQueryText: () => '',
+        hasAttachments: () => false,
+        isQuickSearchOpen: () => false,
+        hasQuickSearchHighlight: () => false,
+        shouldTriggerQuickSearch: () => false,
+        isMultiLineCursor: () => false,
+        isCursorAtTextStart: () => true,
+        isCursorAtEnd: () => true,
+        hasModelOverride: () => false,
+        getSessionHistoryCount: () => 0,
+        isLoading: () => false,
+        ...defaultCallbacks,
+        ...overrides,
     };
 
     return {
-        callbacks,
-        router: createSearchKeyboardRouter({
-            getPendingApproval: () => null,
-            getActiveSurface: () => 'search-surface',
-            hasActivePopupWindowFocus: () => false,
-            getQueryText: () => '',
-            hasAttachments: () => false,
-            isQuickSearchOpen: () => false,
-            hasQuickSearchHighlight: () => false,
-            shouldTriggerQuickSearch: () => false,
-            isMultiLineCursor: () => false,
-            hasModelOverride: () => false,
-            getSessionHistoryCount: () => 0,
-            isLoading: () => false,
-            ...callbacks,
-            ...overrides,
-        }),
+        callbacks: routerOptions,
+        router: createSearchKeyboardRouter(routerOptions),
     };
 }
 
@@ -89,8 +100,23 @@ describe('createSearchKeyboardRouter', () => {
         expect(callbacks.onApproveApproval).toHaveBeenCalledWith('approval-2');
     });
 
-    it('runs primary shortcuts only when their guard conditions are satisfied', async () => {
+    it('routes configurable command shortcuts through the action callback', async () => {
         const { router, callbacks } = createKeyboardRouter({
+            getSearchKeybindings: () => ({
+                ...createDefaultSearchKeybindings(),
+                'search.history.open': 'Mod+Y',
+            }),
+        });
+
+        expect(router.route({ key: 'y', ctrlKey: true })).toBe(true);
+        await flushAsyncWork();
+
+        expect(callbacks.onSearchKeybindingAction).toHaveBeenCalledWith('search.history.open');
+    });
+
+    it('only routes cancel and clear actions when their guard conditions are satisfied', async () => {
+        const { router, callbacks } = createKeyboardRouter({
+            getSearchKeybindings: () => createDefaultSearchKeybindings(),
             getQueryText: () => 'touchai',
             isLoading: () => true,
         });
@@ -100,8 +126,14 @@ describe('createSearchKeyboardRouter', () => {
         expect(router.route({ key: '.', ctrlKey: true, shiftKey: true })).toBe(false);
         await flushAsyncWork();
 
-        expect(callbacks.onPrimaryShortcut).toHaveBeenNthCalledWith(1, 'backspace');
-        expect(callbacks.onPrimaryShortcut).toHaveBeenNthCalledWith(2, '.');
+        expect(callbacks.onSearchKeybindingAction).toHaveBeenNthCalledWith(
+            1,
+            'search.draft.clearAll'
+        );
+        expect(callbacks.onSearchKeybindingAction).toHaveBeenNthCalledWith(
+            2,
+            'search.request.cancel'
+        );
     });
 
     it('applies the escape fallback order on the search surface', async () => {
@@ -181,27 +213,30 @@ describe('createSearchKeyboardRouter', () => {
         expect(quickSearchRouter.callbacks.onSubmit).toHaveBeenCalledTimes(1);
 
         const openRouter = createKeyboardRouter({
-            getQueryText: () => 'touch',
+            getQueryText: () => '',
             shouldTriggerQuickSearch: () => true,
         });
         expect(openRouter.router.route({ key: 'ArrowDown' })).toBe(true);
         expect(openRouter.callbacks.onOpenQuickSearch).toHaveBeenCalledTimes(1);
     });
 
-    it('submits ArrowUp on a single-line cursor and leaves multiline editing alone', async () => {
+    it('uses input-history navigation for ArrowUp and leaves multiline editing alone', async () => {
         const singleLineRouter = createKeyboardRouter({
             getQueryText: () => 'submit me',
             isMultiLineCursor: () => false,
+            isCursorAtTextStart: () => true,
+            onNavigateInputHistory: vi.fn(() => 'navigated' as const),
         });
         expect(singleLineRouter.router.route({ key: 'ArrowUp' })).toBe(true);
-        await flushAsyncWork();
-        expect(singleLineRouter.callbacks.onSubmit).toHaveBeenCalledTimes(1);
+        expect(singleLineRouter.callbacks.onNavigateInputHistory).toHaveBeenCalledWith('older');
 
         const multiLineRouter = createKeyboardRouter({
             getQueryText: () => 'keep editing',
             isMultiLineCursor: () => true,
+            isCursorAtTextStart: () => false,
         });
         expect(multiLineRouter.router.route({ key: 'ArrowUp' })).toBe(false);
-        expect(multiLineRouter.callbacks.onSubmit).not.toHaveBeenCalled();
+        expect(multiLineRouter.callbacks.onNavigateInputHistory).not.toHaveBeenCalled();
+        await flushAsyncWork();
     });
 });

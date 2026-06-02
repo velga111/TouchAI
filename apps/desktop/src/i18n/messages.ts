@@ -87,6 +87,22 @@ const zhCNMessages = {
         '点击输入框后按下您想要设置的快捷键组合。支持的修饰键：Ctrl、Alt、Shift',
     'settings.general.winKeyUnsupported': '不支持 Win 键组合，请使用 Ctrl、Alt、Shift',
     'settings.general.shortcutSaved': '快捷键保存成功',
+    'settings.general.searchShortcuts': '搜索页快捷键',
+    'settings.general.searchShortcutsDescription':
+        '自定义搜索窗口内的命令型快捷键，不会影响输入导航与全局唤起。',
+    'settings.general.searchActions.history': '打开会话历史',
+    'settings.general.searchActions.focusInput': '聚焦输入框',
+    'settings.general.searchActions.newSession': '开始新会话',
+    'settings.general.searchActions.modelToggle': '切换模型选择',
+    'settings.general.searchActions.windowPin': '切换窗口置顶',
+    'settings.general.searchActions.cancelRequest': '取消当前请求',
+    'settings.general.searchActions.clearAll': '清空草稿与上下文',
+    'settings.general.searchShortcuts.errors.modifierRequired': '快捷键至少需要一个修饰键',
+    'settings.general.searchShortcuts.errors.reserved':
+        '该快捷键保留给输入/导航行为，请选择其他组合',
+    'settings.general.searchShortcuts.errors.duplicate': '该快捷键已被“{action}”使用，请换一个组合',
+    'settings.general.searchShortcuts.errors.globalConflict':
+        '该快捷键与全局唤起快捷键冲突，请换一个组合',
     'settings.general.saveShortcutFailed': '保存快捷键到数据库失败',
     'settings.general.loadSettingsFailed': '加载设置失败',
     'settings.general.saveStartOnBootFailed': '保存开机自启动设置失败',
@@ -816,6 +832,24 @@ const enUSMessages: Record<keyof typeof zhCNMessages, string> = {
     'settings.general.winKeyUnsupported':
         'Win key combinations are not supported. Use Ctrl, Alt, or Shift.',
     'settings.general.shortcutSaved': 'Shortcut saved',
+    'settings.general.searchShortcuts': 'Search shortcuts',
+    'settings.general.searchShortcutsDescription':
+        'Customize command shortcuts inside the search window without changing typing, navigation, or the global activation shortcut.',
+    'settings.general.searchActions.history': 'Open session history',
+    'settings.general.searchActions.focusInput': 'Focus input',
+    'settings.general.searchActions.newSession': 'Start new session',
+    'settings.general.searchActions.modelToggle': 'Toggle model picker',
+    'settings.general.searchActions.windowPin': 'Toggle window pin',
+    'settings.general.searchActions.cancelRequest': 'Cancel current request',
+    'settings.general.searchActions.clearAll': 'Clear draft and context',
+    'settings.general.searchShortcuts.errors.modifierRequired':
+        'A shortcut must include at least one modifier key',
+    'settings.general.searchShortcuts.errors.reserved':
+        'This shortcut is reserved for typing or navigation. Choose another combination.',
+    'settings.general.searchShortcuts.errors.duplicate':
+        'This shortcut is already used by "{action}". Choose another combination.',
+    'settings.general.searchShortcuts.errors.globalConflict':
+        'This shortcut conflicts with the global activation shortcut. Choose another combination.',
     'settings.general.saveShortcutFailed': 'Failed to save shortcut to database',
     'settings.general.loadSettingsFailed': 'Failed to load settings',
     'settings.general.saveStartOnBootFailed': 'Failed to save start-on-boot setting',

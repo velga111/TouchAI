@@ -26,6 +26,7 @@ export enum SettingKey {
     AUTO_START = 'auto_start',
     OUTPUT_SCROLL_BEHAVIOR = 'output_scroll_behavior',
     SEARCH_WINDOW_SIZE_PRESET = 'search_window_size_preset',
+    SEARCH_KEYBINDINGS = 'search_keybindings',
 }
 
 export type ToolLogKind = 'mcp' | 'builtin';

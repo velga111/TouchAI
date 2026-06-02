@@ -13,6 +13,11 @@ import {
     normalizeAppUpdateChannel,
 } from '@/config/appUpdate';
 import {
+    createDefaultSearchKeybindings,
+    normalizeSearchKeybindings,
+    type SearchKeybindings,
+} from '@/config/searchKeybindings';
+import {
     DEFAULT_SEARCH_WINDOW_SIZE_PRESET,
     resolveSearchWindowDefaultSize,
     type SearchWindowDefaultSize,
@@ -26,6 +31,7 @@ export type OutputScrollBehavior = 'follow_output' | 'stay_position' | 'jump_to_
 
 export interface GeneralSettingsData {
     globalShortcut: string;
+    searchKeybindings: SearchKeybindings;
     startOnBoot: boolean;
     startMinimized: boolean;
     outputScrollBehavior: OutputScrollBehavior;
@@ -39,6 +45,7 @@ export interface GeneralSettingsData {
 
 const DEFAULT_GENERAL_SETTINGS: GeneralSettingsData = {
     globalShortcut: 'Alt+Space',
+    searchKeybindings: createDefaultSearchKeybindings(),
     startOnBoot: false,
     startMinimized: true,
     outputScrollBehavior: 'follow_output',
@@ -53,6 +60,9 @@ const DEFAULT_GENERAL_SETTINGS: GeneralSettingsData = {
 function createDefaultGeneralSettings(): GeneralSettingsData {
     return {
         ...DEFAULT_GENERAL_SETTINGS,
+        searchKeybindings: {
+            ...DEFAULT_GENERAL_SETTINGS.searchKeybindings,
+        },
         searchWindowDefaultSize: {
             ...DEFAULT_GENERAL_SETTINGS.searchWindowDefaultSize,
         },
@@ -112,9 +122,28 @@ export const useSettingsStore = defineStore('settings', () => {
         };
     }
 
+    function applySearchKeybindings(value: unknown): void {
+        settings.value.searchKeybindings = normalizeSearchKeybindings(value);
+    }
+
+    function parsePersistedSearchKeybindings(value: string | null): SearchKeybindings {
+        if (!value) {
+            return createDefaultSearchKeybindings();
+        }
+
+        try {
+            return normalizeSearchKeybindings(JSON.parse(value));
+        } catch {
+            return createDefaultSearchKeybindings();
+        }
+    }
+
     function cloneSettingsSnapshot(): GeneralSettingsData {
         return {
             ...settings.value,
+            searchKeybindings: {
+                ...settings.value.searchKeybindings,
+            },
             searchWindowDefaultSize: {
                 ...settings.value.searchWindowDefaultSize,
             },
@@ -126,6 +155,11 @@ export const useSettingsStore = defineStore('settings', () => {
             case 'global_shortcut':
                 settings.value.globalShortcut = String(
                     value || DEFAULT_GENERAL_SETTINGS.globalShortcut
+                );
+                break;
+            case 'search_keybindings':
+                applySearchKeybindings(
+                    typeof value === 'string' ? parsePersistedSearchKeybindings(value) : value
                 );
                 break;
             case 'start_on_boot':
@@ -164,6 +198,8 @@ export const useSettingsStore = defineStore('settings', () => {
         switch (key) {
             case 'global_shortcut':
                 return settings.value.globalShortcut;
+            case 'search_keybindings':
+                return JSON.stringify(settings.value.searchKeybindings);
             case 'start_on_boot':
                 return String(settings.value.startOnBoot);
             case 'start_minimized':
@@ -189,6 +225,10 @@ export const useSettingsStore = defineStore('settings', () => {
         switch (key) {
             case 'global_shortcut':
                 return settings.value.globalShortcut;
+            case 'search_keybindings':
+                return {
+                    ...settings.value.searchKeybindings,
+                };
             case 'start_on_boot':
                 return settings.value.startOnBoot;
             case 'start_minimized':
@@ -222,6 +262,7 @@ export const useSettingsStore = defineStore('settings', () => {
         try {
             const [
                 globalShortcut,
+                searchKeybindings,
                 startOnBoot,
                 startMinimized,
                 outputScroll,
@@ -232,6 +273,7 @@ export const useSettingsStore = defineStore('settings', () => {
                 appUpdateLastCheckedAt,
             ] = await Promise.all([
                 getSettingValue({ key: 'global_shortcut' }),
+                getSettingValue({ key: 'search_keybindings' }),
                 getSettingValue({ key: 'start_on_boot' }),
                 getSettingValue({ key: 'start_minimized' }),
                 getSettingValue({ key: 'output_scroll_behavior' }),
@@ -244,6 +286,7 @@ export const useSettingsStore = defineStore('settings', () => {
 
             settings.value.globalShortcut =
                 globalShortcut || DEFAULT_GENERAL_SETTINGS.globalShortcut;
+            settings.value.searchKeybindings = parsePersistedSearchKeybindings(searchKeybindings);
             settings.value.startOnBoot =
                 startOnBoot === null
                     ? DEFAULT_GENERAL_SETTINGS.startOnBoot
@@ -264,6 +307,7 @@ export const useSettingsStore = defineStore('settings', () => {
 
             await Promise.allSettled([
                 persistDefaultIfMissing('global_shortcut', globalShortcut),
+                persistDefaultIfMissing('search_keybindings', searchKeybindings),
                 persistDefaultIfMissing('start_on_boot', startOnBoot),
                 persistDefaultIfMissing('start_minimized', startMinimized),
                 persistDefaultIfMissing('output_scroll_behavior', outputScroll),
@@ -372,6 +416,10 @@ export const useSettingsStore = defineStore('settings', () => {
         await updateSetting('global_shortcut', shortcut);
     }
 
+    async function updateSearchKeybindings(searchKeybindings: SearchKeybindings) {
+        await updateSetting('search_keybindings', normalizeSearchKeybindings(searchKeybindings));
+    }
+
     async function updateStartOnBoot(enabled: boolean) {
         await updateSetting('start_on_boot', enabled);
     }
@@ -406,6 +454,7 @@ export const useSettingsStore = defineStore('settings', () => {
 
     const outputScrollBehavior = computed(() => settings.value.outputScrollBehavior);
     const globalShortcut = computed(() => settings.value.globalShortcut);
+    const searchKeybindings = computed(() => settings.value.searchKeybindings);
     const searchWindowSizePreset = computed(() => settings.value.searchWindowSizePreset);
     const searchWindowDefaultSize = computed(() => settings.value.searchWindowDefaultSize);
     const language = computed(() => settings.value.language);
@@ -419,6 +468,7 @@ export const useSettingsStore = defineStore('settings', () => {
         loading,
         outputScrollBehavior,
         globalShortcut,
+        searchKeybindings,
         searchWindowSizePreset,
         searchWindowDefaultSize,
         language,
@@ -429,6 +479,7 @@ export const useSettingsStore = defineStore('settings', () => {
         dispose,
         refresh,
         updateGlobalShortcut,
+        updateSearchKeybindings,
         updateStartOnBoot,
         updateStartMinimized,
         updateOutputScrollBehavior,

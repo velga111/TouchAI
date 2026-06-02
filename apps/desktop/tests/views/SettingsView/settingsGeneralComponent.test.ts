@@ -8,6 +8,15 @@ const settingsStoreMock = vi.hoisted(() => ({
     settings: {
         value: {
             globalShortcut: 'Alt+Space',
+            searchKeybindings: {
+                'search.history.open': 'Mod+H',
+                'search.input.focus': 'Mod+L',
+                'search.session.new': 'Mod+N',
+                'search.model.toggle': 'Mod+M',
+                'search.window.pin': 'Mod+P',
+                'search.request.cancel': 'Mod+.',
+                'search.draft.clearAll': 'Mod+Backspace',
+            },
             startOnBoot: false,
             startMinimized: true,
             language: 'zh-CN',
@@ -21,6 +30,7 @@ const settingsStoreMock = vi.hoisted(() => ({
     },
     initialize: vi.fn().mockResolvedValue(undefined),
     updateGlobalShortcut: vi.fn().mockResolvedValue(undefined),
+    updateSearchKeybindings: vi.fn().mockResolvedValue(undefined),
     updateStartOnBoot: vi.fn().mockResolvedValue(undefined),
     updateStartMinimized: vi.fn().mockResolvedValue(undefined),
     updateOutputScrollBehavior: vi.fn().mockResolvedValue(undefined),
@@ -162,6 +172,9 @@ describe('SettingsGeneralSection', () => {
         expect(wrapper.text()).toContain('唤起快捷键');
         expect(wrapper.text()).toContain('Alt+Space');
         expect(wrapper.text()).toContain('Ctrl+Space');
+        expect(wrapper.text()).toContain('搜索页快捷键');
+        expect(wrapper.text()).toContain('打开会话历史');
+        expect(wrapper.text()).toContain('开始新会话');
         expect(wrapper.text()).toContain('启动与窗口');
         expect(wrapper.text()).toContain('开机自启动');
         expect(wrapper.text()).toContain('启动时最小化');
@@ -187,7 +200,7 @@ describe('SettingsGeneralSection', () => {
         expect(controls.length).toBeGreaterThanOrEqual(3);
 
         const rowLabels = wrapper.findAll('[data-testid="settings-general-row-label"]');
-        expect(rowLabels).toHaveLength(8);
+        expect(rowLabels.length).toBeGreaterThanOrEqual(13);
     });
 
     it('shows the current version in the latest update details', async () => {

@@ -11,6 +11,7 @@ import type {
     PopupSessionSearchQueryChangePayload,
 } from '@services/PopupService/types';
 
+import type { SearchKeybindings } from '@/config/searchKeybindings';
 import type { SessionStatusReminderKind } from '@/utils/session';
 
 export type { SessionStatusReminderKind } from '@/utils/session';
@@ -72,6 +73,7 @@ export interface McpStatusChangeEvent {
 
 export type GeneralSettingKey =
     | 'global_shortcut'
+    | 'search_keybindings'
     | 'start_on_boot'
     | 'start_minimized'
     | 'output_scroll_behavior'
@@ -85,7 +87,7 @@ export interface SettingsGeneralUpdatedEvent {
     sourceId: string;
     windowLabel: string;
     key: GeneralSettingKey;
-    value: string | number | boolean | null;
+    value: string | number | boolean | SearchKeybindings | null;
 }
 
 export interface AiModelsUpdatedEvent {

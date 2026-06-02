@@ -1,0 +1,306 @@
+export interface ShortcutMatchInput {
+    key: string;
+    ctrlKey?: boolean;
+    metaKey?: boolean;
+    altKey?: boolean;
+    shiftKey?: boolean;
+}
+
+export interface CapturedShortcutResult {
+    shortcut: string;
+    displayShortcut: string;
+}
+
+const MODIFIER_DISPLAY_ORDER = ['Mod', 'Ctrl', 'Alt', 'Shift'] as const;
+const SUPPORTED_CAPTURE_MODIFIERS = new Set(['Ctrl', 'Alt', 'Shift', 'Mod']);
+const RESERVED_LOCAL_SHORTCUT_KEYS = new Set([
+    'Enter',
+    'Esc',
+    'Tab',
+    'Up',
+    'Down',
+    'Left',
+    'Right',
+]);
+const MODIFIER_KEYS = new Set(['Control', 'Alt', 'Shift', 'Meta', 'OS']);
+
+const KEY_DISPLAY_MAP: Record<string, string> = {
+    ' ': 'Space',
+    Spacebar: 'Space',
+    ArrowUp: 'Up',
+    ArrowDown: 'Down',
+    ArrowLeft: 'Left',
+    ArrowRight: 'Right',
+    Escape: 'Esc',
+    Esc: 'Esc',
+    Delete: 'Del',
+    Del: 'Del',
+    '.': '.',
+};
+
+const ALIAS_MAP: Record<string, string> = {
+    cmd: 'Mod',
+    command: 'Mod',
+    meta: 'Mod',
+    win: 'Mod',
+    super: 'Mod',
+    ctrl: 'Ctrl',
+    control: 'Ctrl',
+    option: 'Alt',
+    alt: 'Alt',
+    shift: 'Shift',
+    esc: 'Esc',
+    escape: 'Esc',
+    delete: 'Del',
+    del: 'Del',
+    return: 'Enter',
+    enter: 'Enter',
+    pageup: 'PageUp',
+    pagedown: 'PageDown',
+    arrowup: 'Up',
+    up: 'Up',
+    arrowdown: 'Down',
+    down: 'Down',
+    arrowleft: 'Left',
+    left: 'Left',
+    arrowright: 'Right',
+    right: 'Right',
+    backspace: 'Backspace',
+    space: 'Space',
+};
+
+function isMacPlatform(): boolean {
+    if (typeof navigator === 'undefined') {
+        return false;
+    }
+
+    return /(Mac|iPhone|iPad|iPod)/i.test(navigator.platform);
+}
+
+function getPrimaryModifierLabel(): 'Cmd' | 'Ctrl' {
+    return isMacPlatform() ? 'Cmd' : 'Ctrl';
+}
+
+function usesPrimaryModifier(input: ShortcutMatchInput): boolean {
+    return isMacPlatform() ? Boolean(input.metaKey) : Boolean(input.ctrlKey);
+}
+
+function normalizeShortcutToken(token: string): string | null {
+    const trimmed = token.trim();
+    if (!trimmed) {
+        return null;
+    }
+
+    const alias = ALIAS_MAP[trimmed.toLowerCase()];
+    if (alias) {
+        return alias;
+    }
+
+    if (trimmed.length === 1) {
+        return trimmed.toUpperCase();
+    }
+
+    if (/^f\d{1,2}$/i.test(trimmed)) {
+        return trimmed.toUpperCase();
+    }
+
+    return trimmed;
+}
+
+function normalizeEventKey(key: string): string | null {
+    if (!key) {
+        return null;
+    }
+
+    const mappedKey = KEY_DISPLAY_MAP[key] ?? key;
+    return normalizeShortcutToken(mappedKey);
+}
+
+function createShortcutParts(shortcut: string): { modifiers: string[]; key: string | null } {
+    const parts = shortcut
+        .split('+')
+        .map((part) => normalizeShortcutToken(part))
+        .filter((part): part is string => Boolean(part));
+
+    const modifierSet = new Set<string>();
+    let key: string | null = null;
+    for (const part of parts) {
+        if (SUPPORTED_CAPTURE_MODIFIERS.has(part)) {
+            modifierSet.add(part);
+            continue;
+        }
+
+        key = part;
+    }
+
+    const modifiers = MODIFIER_DISPLAY_ORDER.filter((modifier) => modifierSet.has(modifier));
+    return { modifiers, key };
+}
+
+export function normalizeLocalShortcutString(shortcut: string | null | undefined): string | null {
+    if (!shortcut) {
+        return null;
+    }
+
+    const { modifiers, key } = createShortcutParts(shortcut);
+    if (!key) {
+        return null;
+    }
+
+    return [...modifiers, key].join('+');
+}
+
+export function formatShortcutForDisplay(shortcut: string | null | undefined): string {
+    const normalized = normalizeLocalShortcutString(shortcut);
+    if (!normalized) {
+        return '—';
+    }
+
+    const { modifiers, key } = createShortcutParts(normalized);
+    const displayModifiers = modifiers.map((modifier) => {
+        if (modifier === 'Mod') {
+            return getPrimaryModifierLabel();
+        }
+        return modifier;
+    });
+
+    return [...displayModifiers, key].join('+');
+}
+
+export function toCurrentPlatformShortcut(shortcut: string | null | undefined): string | null {
+    const normalized = normalizeLocalShortcutString(shortcut);
+    if (!normalized) {
+        return null;
+    }
+
+    return formatShortcutForDisplay(normalized);
+}
+
+export function matchShortcut(
+    shortcut: string | null | undefined,
+    input: ShortcutMatchInput
+): boolean {
+    const normalized = normalizeLocalShortcutString(shortcut);
+    if (!normalized) {
+        return false;
+    }
+
+    const { modifiers, key } = createShortcutParts(normalized);
+    const eventKey = normalizeEventKey(input.key);
+    if (!eventKey || eventKey !== key) {
+        return false;
+    }
+
+    const isMac = isMacPlatform();
+    const expectsMod = modifiers.includes('Mod');
+    const expectsCtrl = modifiers.includes('Ctrl');
+    const expectsAlt = modifiers.includes('Alt');
+    const expectsShift = modifiers.includes('Shift');
+
+    if (expectsMod !== usesPrimaryModifier(input)) {
+        return false;
+    }
+
+    const effectiveCtrl = isMac
+        ? Boolean(input.ctrlKey)
+        : expectsMod
+          ? false
+          : Boolean(input.ctrlKey);
+    if (expectsCtrl !== effectiveCtrl) {
+        return false;
+    }
+
+    if (expectsAlt !== Boolean(input.altKey)) {
+        return false;
+    }
+
+    if (expectsShift !== Boolean(input.shiftKey)) {
+        return false;
+    }
+
+    if (!isMac && input.metaKey) {
+        return false;
+    }
+
+    return true;
+}
+
+export function captureShortcutFromKeyboardEvent(
+    event: KeyboardEvent
+): CapturedShortcutResult | null {
+    if (MODIFIER_KEYS.has(event.key)) {
+        return null;
+    }
+
+    if (!isMacPlatform() && event.metaKey) {
+        return null;
+    }
+
+    const key = normalizeEventKey(event.key);
+    if (!key) {
+        return null;
+    }
+
+    const modifiers: string[] = [];
+    if (usesPrimaryModifier(event)) {
+        modifiers.push('Mod');
+    }
+    if (event.ctrlKey && isMacPlatform()) {
+        modifiers.push('Ctrl');
+    }
+    if (event.altKey) {
+        modifiers.push('Alt');
+    }
+    if (event.shiftKey) {
+        modifiers.push('Shift');
+    }
+
+    const shortcut = [...modifiers, key].join('+');
+    return {
+        shortcut,
+        displayShortcut: formatShortcutForDisplay(shortcut),
+    };
+}
+
+export function isReservedLocalShortcut(shortcut: string | null | undefined): boolean {
+    const normalized = normalizeLocalShortcutString(shortcut);
+    if (!normalized) {
+        return false;
+    }
+
+    const { key } = createShortcutParts(normalized);
+    return key ? RESERVED_LOCAL_SHORTCUT_KEYS.has(key) : false;
+}
+
+export function hasRequiredModifier(shortcut: string | null | undefined): boolean {
+    const normalized = normalizeLocalShortcutString(shortcut);
+    if (!normalized) {
+        return false;
+    }
+
+    const { modifiers } = createShortcutParts(normalized);
+    return modifiers.length > 0;
+}
+
+export function findShortcutConflict<T extends string>(
+    shortcut: string | null | undefined,
+    entries: Array<{ id: T; shortcut: string | null | undefined }>,
+    excludeId?: T
+): T | null {
+    const normalized = normalizeLocalShortcutString(shortcut);
+    if (!normalized) {
+        return null;
+    }
+
+    for (const entry of entries) {
+        if (excludeId && entry.id === excludeId) {
+            continue;
+        }
+
+        if (normalizeLocalShortcutString(entry.shortcut) === normalized) {
+            return entry.id;
+        }
+    }
+
+    return null;
+}

@@ -115,7 +115,7 @@
     const inputHistoryRestoreVersion = ref(0);
     const mcpStore = useMcpStore();
     const settingsStore = useSettingsStore();
-    const { searchWindowDefaultSize } = storeToRefs(settingsStore);
+    const { searchWindowDefaultSize, searchKeybindings } = storeToRefs(settingsStore);
     const { sessionStatuses, refreshAllStatuses: refreshSessionStatuses } = useSessionStatus();
     const { isPinned, syncWindowPinState, setWindowPinned, toggleWindowPin } = useSearchWindowPin();
     const widgetBridgeWindow = window as Window & {
@@ -508,6 +508,7 @@
 
     useSearchKeyboard({
         viewReady,
+        searchKeybindings,
         queryText,
         attachments,
         cursorContext,

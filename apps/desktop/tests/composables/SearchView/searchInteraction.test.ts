@@ -7,7 +7,6 @@ import {
     createPopupSurfaceCoordinator,
     createSearchEntryPolicy,
     createSearchInteractionContext,
-    createSearchKeyboardRouter,
     createSessionInputHistoryBrowseState,
     extractSessionInputHistoryEntries,
     navigateSessionInputHistory,
@@ -64,11 +63,6 @@ function createControllerStub() {
         isQuickSearchContextMenuOpen: vi.fn(() => false),
         closeQuickSearchContextMenu: vi.fn(),
     } satisfies SearchPageController;
-}
-
-async function flushMicrotasks() {
-    await Promise.resolve();
-    await Promise.resolve();
 }
 
 describe('extractSessionInputHistoryEntries', () => {
@@ -327,152 +321,5 @@ describe('useSearchOverlayMachine', () => {
         expect(mounted.result.overlayState.value).toBe('idle');
 
         mounted.unmount();
-    });
-});
-
-describe('createSearchKeyboardRouter', () => {
-    function createKeyboardRouter(
-        overrides: Partial<Parameters<typeof createSearchKeyboardRouter>[0]> = {}
-    ) {
-        const callbacks = {
-            onPromptApprovalAttention: vi.fn(),
-            onRejectApproval: vi.fn(),
-            onApproveApproval: vi.fn(),
-            onForwardToPopup: vi.fn(),
-            onSubmit: vi.fn(),
-            onOpenQuickSearch: vi.fn(),
-            onMoveQuickSearchSelection: vi.fn(),
-            onOpenHighlightedQuickSearchItem: vi.fn(),
-            onCloseQuickSearch: vi.fn(),
-            onQuickSearchPageUp: vi.fn(),
-            onQuickSearchPageDown: vi.fn(),
-            onQuickSearchContextMenu: vi.fn(),
-            onQuickSearchToggleView: vi.fn(),
-            onQuickSearchCollapse: vi.fn(),
-            onNavigateInputHistory: vi.fn(() => 'ignored' as const),
-            onHideAllPopups: vi.fn(),
-            onCancelRequest: vi.fn(),
-            onClearModelOverride: vi.fn(),
-            onHideWindow: vi.fn(),
-            onClearSession: vi.fn(),
-            onClearDraft: vi.fn(),
-            onClearAll: vi.fn(),
-            onPrimaryShortcut: vi.fn(),
-        };
-
-        return {
-            callbacks,
-            router: createSearchKeyboardRouter({
-                getPendingApproval: () => null,
-                getActiveSurface: () => 'search-surface',
-                hasActivePopupWindowFocus: () => false,
-                getQueryText: () => '',
-                hasAttachments: () => false,
-                isQuickSearchOpen: () => false,
-                hasQuickSearchHighlight: () => false,
-                shouldTriggerQuickSearch: () => false,
-                isMultiLineCursor: () => false,
-                isCursorAtStart: () => true,
-                isCursorAtTextStart: () => true,
-                isCursorAtEnd: () => true,
-                hasModelOverride: () => false,
-                getSessionHistoryCount: () => 0,
-                isLoading: () => false,
-                ...callbacks,
-                ...overrides,
-            }),
-        };
-    }
-
-    it('rejects pending approval with escape before normal surface handling', () => {
-        const { router, callbacks } = createKeyboardRouter({
-            getPendingApproval: () => ({
-                callId: 'approval-1',
-                keyboardApproveAt: Date.now() + 1_000,
-            }),
-        });
-
-        const handled = router.route({ key: 'Escape' });
-
-        expect(handled).toBe(true);
-        expect(callbacks.onRejectApproval).toHaveBeenCalledWith('approval-1');
-    });
-
-    it('submits when ArrowDown cannot navigate newer history and query text is present', () => {
-        const { router, callbacks } = createKeyboardRouter({
-            getQueryText: () => 'touch',
-            shouldTriggerQuickSearch: () => true,
-            onNavigateInputHistory: vi.fn(() => 'ignored' as const),
-        });
-
-        const handled = router.route({ key: 'ArrowDown' });
-
-        expect(handled).toBe(true);
-        expect(callbacks.onSubmit).toHaveBeenCalledTimes(1);
-        expect(callbacks.onOpenQuickSearch).not.toHaveBeenCalled();
-    });
-
-    it('opens quick search when ArrowDown cannot navigate newer history and query is empty with eligible trigger', () => {
-        const { router, callbacks } = createKeyboardRouter({
-            getQueryText: () => '',
-            shouldTriggerQuickSearch: () => true,
-            hasAttachments: () => false,
-            onNavigateInputHistory: vi.fn(() => 'ignored' as const),
-        });
-
-        const handled = router.route({ key: 'ArrowDown' });
-
-        expect(handled).toBe(true);
-        expect(callbacks.onOpenQuickSearch).toHaveBeenCalledTimes(1);
-    });
-
-    it('does not navigate input history when multiline cursor is not at the text start', () => {
-        const { router, callbacks } = createKeyboardRouter({
-            isMultiLineCursor: () => true,
-            isCursorAtTextStart: () => false,
-        });
-
-        const handled = router.route({ key: 'ArrowUp' });
-
-        expect(handled).toBe(false);
-        expect(callbacks.onNavigateInputHistory).not.toHaveBeenCalled();
-    });
-
-    it('forwards model-dropdown arrow keys to the popup surface contract', () => {
-        const { router, callbacks } = createKeyboardRouter({
-            getActiveSurface: () => 'model-dropdown-surface',
-        });
-
-        const handled = router.route({ key: 'ArrowDown' });
-
-        expect(handled).toBe(true);
-        expect(callbacks.onForwardToPopup).toHaveBeenCalledWith('ArrowDown');
-    });
-
-    it('clears the draft before model/session/window dismissal on escape', () => {
-        const { router, callbacks } = createKeyboardRouter({
-            getQueryText: () => 'hello',
-        });
-
-        const handled = router.route({ key: 'Escape' });
-
-        expect(handled).toBe(true);
-        expect(callbacks.onClearDraft).toHaveBeenCalledTimes(1);
-        expect(callbacks.onClearModelOverride).not.toHaveBeenCalled();
-        expect(callbacks.onClearSession).not.toHaveBeenCalled();
-        expect(callbacks.onHideWindow).not.toHaveBeenCalled();
-    });
-
-    it('fires the stop-request primary shortcut only while the request is still loading', async () => {
-        const { router, callbacks } = createKeyboardRouter({
-            getQueryText: () => '',
-            isLoading: () => true,
-        });
-
-        const handled = router.route({ key: '.', ctrlKey: true });
-        await flushMicrotasks();
-
-        expect(handled).toBe(true);
-        expect(callbacks.onPrimaryShortcut).toHaveBeenCalledWith('.');
     });
 });
