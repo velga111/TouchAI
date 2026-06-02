@@ -1,0 +1,87 @@
+---
+title: TouchAI
+description: A desktop AI assistant that helps you continue work in your current flow
+template: splash
+hero:
+  tagline: Invoke instantly · Stay in context · Built-in tools · MCP extensions
+  image:
+    file: ../../../assets/houston.webp
+  actions:
+    - text: Install TouchAI
+      link: /en/getting-started/installation/
+      icon: right-arrow
+    - text: Quickstart
+      link: /en/getting-started/quickstart/
+      icon: rocket
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## What is TouchAI?
+
+TouchAI is a desktop AI assistant built around one idea: **bring AI into the task you are already doing instead of making you jump into a separate app**.
+
+You can invoke it with a shortcut, ask questions in the middle of your current task, organize files and notes, or keep reasoning from the context you already have without re-explaining everything from scratch.
+
+## Start with these 3 steps
+
+If this is your first time using TouchAI, complete this path once to get a successful first experience:
+
+<CardGrid stagger>
+	<Card title="1. Install TouchAI" icon="download">
+		Download and install the app, then make sure it launches correctly on your computer. See the [installation guide](/en/getting-started/installation/).
+	</Card>
+	<Card title="2. Configure a model" icon="key">
+		Add a model provider, enter your API key, and choose a default model. See [model configuration](/en/settings/model-configuration/).
+	</Card>
+	<Card title="3. Start your first chat" icon="bolt">
+		Press `Alt+Space` to open TouchAI, send a simple question, and confirm you receive a reply. See [quickstart](/en/getting-started/quickstart/).
+	</Card>
+</CardGrid>
+
+## What you can do with it
+
+<CardGrid stagger>
+	<Card title="Instant invoke" icon="bolt">
+		Press `Alt+Space` to start immediately and bring AI into the task you are already working on.
+	</Card>
+	<Card title="Current context" icon="monitor">
+		Continue from files, screenshots, clipboard content, and what is already on your screen instead of describing the background again.
+	</Card>
+	<Card title="Keyboard first" icon="keyboard">
+		Avoid constant mouse and window switching and fit TouchAI more naturally into your desktop workflow.
+	</Card>
+	<Card title="Built-in tools" icon="wrench">
+		Search files, read content, run commands, and keep pushing a task forward.
+	</Card>
+	<Card title="Model choice" icon="key">
+		Configure providers and models freely, then choose the best balance of capability and cost for each task.
+	</Card>
+	<Card title="Extended services" icon="search">
+		Connect more external services through MCP so TouchAI can work on more complete real-world tasks.
+	</Card>
+</CardGrid>
+
+## Where to go next
+
+<CardGrid stagger>
+	<Card title="Install and get started" icon="rocket">
+		If you have not finished your first successful run yet, start with the [installation guide](/en/getting-started/installation/) and [quickstart](/en/getting-started/quickstart/).
+	</Card>
+	<Card title="Core capabilities" icon="bolt">
+		Learn how TouchAI searches files, reads content, and runs commands. See [built-in tools](/en/features/built-in-tools/) and [code and commands](/en/features/code-and-command/).
+	</Card>
+	<Card title="Connect more services" icon="search">
+		If your work happens in GitHub, docs platforms, or business systems, continue with [MCP extensions](/en/extensions/mcp-tools/).
+	</Card>
+	<Card title="Settings and configuration" icon="setting">
+		Review model setup and provider access. See [model configuration](/en/settings/model-configuration/) and [provider setup](/en/settings/api-keys/).
+	</Card>
+</CardGrid>
+
+## More information
+
+- Tech stack: Vue 3.5, Vite 8, TypeScript, Tauri 2, SQLite, Drizzle ORM
+- Open-source license: [GPL-3.0-or-later](https://github.com/TouchAI-org/TouchAI/blob/main/COPYING)
+- Community and feedback: [Discussions](https://github.com/TouchAI-org/TouchAI/discussions), [Issues](https://github.com/TouchAI-org/TouchAI/issues), [Releases](https://github.com/TouchAI-org/TouchAI/releases)

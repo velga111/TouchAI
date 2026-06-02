@@ -1,0 +1,76 @@
+---
+title: Add a Service
+description: The full process for adding, connecting, and verifying an MCP service in TouchAI
+---
+
+This page walks through the full process of adding, connecting, and verifying an MCP service in TouchAI.
+
+## 1. Find a service
+
+Start by looking through MCP marketplaces or the official website of the service you want to connect, then check its connection method and required parameters.
+
+- [mcp.so](https://mcp.so/)
+- [Smithery](https://smithery.ai/)
+- [Glama MCP](https://glama.ai/mcp/servers)
+- [MCP Community](https://mcp.community/)
+
+## 2. Open the MCP Tools page
+
+Open **Settings** in the app, then choose **MCP Tools** from the left-side navigation.
+
+![Open the MCP Tools page](/extensions/mcp-add-service/mcp-open-tool-page.png)
+
+## 3. Create a new server
+
+Click **+ Add MCP Server** in the lower-left corner.
+
+![Create a new MCP service](/extensions/mcp-add-service/mcp-new-service.png)
+
+## 4. Fill in the configuration
+
+On the **Configuration** tab, fill in the fields based on the target service documentation.
+
+In most cases, you will at least use:
+
+- **Name**
+- **Transport type**
+- **Command** or **URL**
+- If the service requires authentication, add **Headers** or **Environment variables**
+- If the service has special startup requirements, add **Arguments** or **Working directory**
+
+![MCP service form](/extensions/mcp-add-service/mcp-add-service-form.png)
+
+## 5. Review available tools
+
+Once configuration is complete, switch to the **Tools** tab to see which tools this service provides.
+
+![View MCP service tools](/extensions/mcp-add-service/mcp-view-service-tools.png)
+
+## 6. Use the service in a conversation
+
+After the connection succeeds, you can use the service’s capabilities in TouchAI and bring real tasks into the current conversation.
+
+![Use an MCP service](/extensions/mcp-add-service/mcp-use-service.png)
+
+## 7. Check logs
+
+If something goes wrong during connection or tool calls, open the **Logs** tab to inspect the service logs and narrow down the issue.
+
+![View MCP service logs](/extensions/mcp-add-service/mcp-view-service-logs.png)
+
+## Common questions
+
+### Why can the service not connect?
+
+- Check whether the address or startup command is correct
+- Check whether the required key, token, or environment variables are complete
+- Confirm whether the current network or local dependency is available
+- Check the official documentation to confirm whether the service supports the chosen connection method
+
+### Why is the tool list empty?
+
+The service may not have connected successfully yet, or the configuration may have been saved with missing required parameters.
+
+### How should I read an error in the logs?
+
+First identify whether it is a connection failure, authentication failure, or tool execution failure, then go back to the configuration tab and verify the related parameters one by one.

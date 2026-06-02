@@ -1,0 +1,20 @@
+---
+title: MCP Extensions
+description: Understand the MCP connection methods TouchAI supports and what you need to fill in
+---
+
+You can think of MCP as a way for TouchAI to connect to external services. After a service is connected, it appears in **MCP Tools** and can be called directly in a conversation.
+
+## Connection methods supported by TouchAI
+
+| Transport type | Best for | Required fields |
+| --- | --- | --- |
+| **Stdio** | The service runs locally and is started by a command | **Name**, **Transport type**, **Command**, and optionally **Arguments**, **Working directory**, **Environment variables** |
+| **SSE (Streamable HTTP)** | The service runs remotely and is compatible with Streamable HTTP or SSE | **Name**, **Transport type**, **URL**, and optionally **Headers** |
+| **HTTP** | The service runs remotely and is called through HTTP POST | **Name**, **Transport type**, **URL**, and optionally **Headers** |
+
+## A simple way to decide
+
+- If the documentation gives you a local startup command, it is usually **Stdio**
+- If the documentation gives you a remote address and explicitly says **SSE** or **Streamable HTTP**, it is usually **SSE (Streamable HTTP)**
+- If the documentation gives you a remote address and explicitly says **HTTP POST**, it is usually **HTTP**

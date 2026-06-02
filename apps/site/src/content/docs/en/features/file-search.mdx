@@ -1,0 +1,76 @@
+---
+title: File Search
+description: Search local files in TouchAI and continue reading or organizing them
+---
+
+## What this capability is
+
+File search is useful for tasks where you need to **find something first and continue working with it next**. You tell TouchAI what to look for, it locates files on your machine, and then it can keep reading, summarizing, or answering questions about them.
+
+## How to use it / A typical flow
+
+### Before you use it
+
+On Windows, TouchAI relies on **Everything** for fast file indexing. Before first use, confirm that:
+
+1. [Everything](https://www.voidtools.com/zh-cn/downloads/) is installed
+2. Everything is running and has finished its initial index
+3. The files you want to search are not excluded by the index rules
+
+If Everything is not running, or it was just installed and has not finished indexing yet, results may be empty or incomplete.
+
+### Option 1: Type part of the filename directly
+
+If you remember part of the filename, enter a keyword directly into the input box, such as part of a document name, extension, or directory name. TouchAI can locate matching results first and then continue with the next step.
+
+This works best when:
+
+- You already remember a filename keyword
+- You want to narrow the results quickly
+- You want to locate files first and then decide which one to read
+
+![Search local files](/features/file-search/file-search1.png)
+
+### Option 2: Ask the AI to search for you
+
+If you do not know the exact filename, you can describe what you need in natural language and let TouchAI search first.
+
+Common requests include:
+
+- Help me find the PDFs I downloaded today
+- Help me find all README files in this project
+- Help me find documents with “contract” in the name
+- Help me find screenshots I saved yesterday
+
+This works best when:
+
+- You only remember the file type, time range, or rough purpose
+- You want to complete “search + read + summarize” in one conversation
+- You prefer describing the task naturally
+
+![Search local files](/features/file-search/file-search2.png)
+
+A typical flow usually looks like this:
+
+1. Enter a keyword, or describe what you want in natural language
+2. Review the matching results and narrow the scope if needed
+3. Pick the target file and ask TouchAI to continue reading, summarizing, or comparing it
+
+## Common questions
+
+### What if I cannot find the file?
+
+Check these first:
+
+1. Whether Everything is running
+2. Whether the file was just created and the index has not updated yet
+3. Whether the keyword is too broad or too specific
+4. Whether the file is located in an excluded directory
+
+### What if there are too many results?
+
+Add more conditions such as file type, time range, directory, or a more specific keyword to narrow the scope.
+
+### How do I keep reading after the file is found?
+
+You can continue with a direct follow-up request such as “Read the first PDF and summarize the key points” or “Open this file and tell me where the risks are.”

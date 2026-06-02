@@ -1,0 +1,102 @@
+---
+title: Quickstart
+description: Complete your first successful run in a few minutes
+---
+
+This guide walks you through the first usable setup and your first successful message.
+
+## Get started
+
+### 1. Configure a model
+
+Before the first use, you need to add an available provider and model.
+
+1. Find the TouchAI icon in the system tray at the bottom-right of your screen, right-click it, and open settings
+   ![Settings page](/getting-started/quickstart/quickstart-settings.png)
+2. Open **Providers & Models**, add a provider, and fill in the required information
+   ![Providers and models page](/getting-started/quickstart/quickstart-provider-settings.png)
+3. Refresh the model list and choose a default model
+   ![Providers and models page](/getting-started/quickstart/quickstart-provider-settings.png)
+
+If you need more field-level guidance, see [model configuration](/en/settings/model-configuration/).
+
+#### Launch offer: TouchAI x Xiaomi MiMo limited free tokens
+
+![XiaoMIMO launch offer](/settings/api-keys/XiaoMIMO/xiaomimo-first-benefit.png)
+
+- **Campaign period**: 2026-06-01 to 2026-06-14
+- **Offer**: During the campaign, **Xiaomi MiMo** provides **free tokens** across the full model lineup for TouchAI users.
+- **How to join**: Sign in to TouchAI and start using it directly. No extra action is required.
+
+##### How to join
+
+1. Open the TouchAI settings page, go to **Providers & Models**, and click XiaoMIMO
+   ![XiaoMIMO settings page](/getting-started/quickstart/quickstart-xiaomimo-settings-page.png)
+2. Click **Authorize**
+   ![XiaoMIMO add API key](/getting-started/quickstart/quickstart-xiaomimo-add-api-key.png)
+3. Sign in with your GitHub account
+   ![GitHub login](/getting-started/quickstart/quickstart-github-login.png)
+4. Return to the TouchAI settings page
+   ![XiaoMIMO add success](/getting-started/quickstart/quickstart-xiaomimo-add-success.png)
+5. Confirm that the authorization succeeded
+   ![XiaoMIMO key success](/getting-started/quickstart/quickstart-xiaomimo-add-key-success.png)
+
+### 3. Start your first chat
+
+Once setup is complete, you can begin the first conversation:
+
+1. Press `Alt+Space` to invoke TouchAI
+2. Type a simple question
+3. Press `Enter` to send it
+4. Wait for the AI response
+
+![First chat example](/getting-started/quickstart/quickstart-first-chat.png)
+
+## What success looks like
+
+If everything worked, you will usually see the following:
+
+- TouchAI opens correctly with `Alt+Space`
+- A default model is already selected above the input box
+- After sending a simple question, the app returns a reply
+- You can continue asking follow-up questions without reconfiguring the provider
+
+At that point, your first successful run is complete.
+
+## Common troubleshooting
+
+### What if I cannot find the tray icon?
+
+First confirm that TouchAI is running. If the tray area is collapsed, expand the hidden icons panel and look again.
+
+### What if the model list is empty or cannot refresh?
+
+Check these first:
+
+- Whether the provider endpoint is correct
+- Whether the API key is valid
+- Whether your current network can reach the provider
+- Whether you refreshed the model list after saving the configuration
+
+If you want to verify each step, see [model configuration](/en/settings/model-configuration/).
+
+### What if the API key is filled in but still does not work?
+
+Common causes include:
+
+- Extra spaces or line breaks were copied with the key
+- The provider account does not have access to the required API
+- The endpoint and key come from different platforms
+
+### What if `Alt+Space` does not respond?
+
+First check whether it conflicts with another application's shortcut, and make sure TouchAI is already running and visible in the system tray. You can also review the [shortcuts](/en/getting-started/shortcuts/) page to confirm the default behavior.
+
+### What if the message sends but never gets a reply?
+
+Usually check:
+
+- Whether the current default model is available
+- Whether the network connection is normal
+- Whether the provider endpoint is temporarily unavailable
+- Whether the request is being blocked by permissions, balance, or quota limits

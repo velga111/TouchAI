@@ -1,0 +1,31 @@
+---
+title: Terminal Operations
+description: Let TouchAI read code, run commands, and continue troubleshooting from the result
+---
+
+TouchAI uses the `bash` tool to help you handle local tasks and terminal operations more efficiently.
+
+## Usage
+
+You do not need to think about which tool to call first. Just describe the task in natural language.
+
+![Code and commands example](/features/code-and-command/code-and-command-example.png)
+
+### Approval and boundaries
+
+Some sensitive terminal commands require your confirmation before execution.
+
+- Make sure the purpose of the command is clear before running it
+- Be extra careful with high-risk commands that delete, overwrite, or reset things
+- Commands may fail if the project environment, local permissions, or working directory is incomplete
+
+![Code and commands boundary](/features/code-and-command/code-and-command-boundary.png)
+
+## Common questions
+
+### Common reasons command execution fails
+
+- The current working directory is wrong
+- Dependencies or runtime prerequisites are missing
+- Local permissions are not sufficient
+- The command itself is incorrect

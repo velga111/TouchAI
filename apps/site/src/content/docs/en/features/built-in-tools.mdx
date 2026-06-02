@@ -1,0 +1,53 @@
+---
+title: Built-in Tools
+description: The core built-in tool capabilities available in TouchAI by default
+---
+
+## What this capability is
+
+TouchAI comes with a built-in set of tools that you can use directly without connecting any extra service first. They mainly help with general tasks such as working with local files, web content, terminal commands, result presentation, and model switching.
+
+You can think of them as the baseline capabilities that let TouchAI actually continue doing work instead of stopping at chat only.
+
+### Overview
+
+| Tool | Purpose |
+|------|------|
+| Terminal command `bash` | Run local commands, inspect output, and continue analysis |
+| Read content `read` | Open local files, images, or PDFs |
+| File search `file_search` | Quickly locate files and folders on your machine |
+| Web fetch `web_fetch` | Retrieve web content and continue organizing it |
+| ShowWidget `show_widget` | Present visual results as inline interactive widgets in chat |
+| Model upgrade `upgrade_model` | Switch to a stronger model for complex tasks |
+
+## How to use it / A typical flow
+
+In most cases, you do not need to choose a built-in tool manually. Just describe the task, and TouchAI will decide whether it should search files, read content, fetch a page, run a command, or use another built-in capability.
+
+A typical flow usually looks like this:
+
+1. You describe the goal, for example “Find the README files in this project and summarize the key points”
+2. TouchAI decides which built-in capabilities fit the task best
+3. It uses the relevant tools and returns the result to the current conversation
+4. You keep asking follow-up questions or tell it to continue the next step
+
+Common requests include:
+
+- Find a local file and summarize it
+- Read a PDF, screenshot, or config file
+- Fetch a web page and organize the key points
+- Run a command and explain the error output
+
+## Common questions
+
+### Do I need to choose tools manually?
+
+Usually not. If you describe the task clearly, TouchAI will try to select the most suitable built-in tool automatically.
+
+### When should I prefer built-in tools?
+
+When the task mostly happens on your current computer, in local files, in a local project, or in ordinary web content, built-in tools are usually enough.
+
+### When is it better to use MCP servers instead?
+
+When the task happens in GitHub, docs platforms, databases, business systems, or team collaboration tools, MCP services are usually a better fit.
