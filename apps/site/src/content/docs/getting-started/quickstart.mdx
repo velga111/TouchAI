@@ -3,29 +3,77 @@ title: 快速开始
 description: 几分钟内完成第一次成功使用，快速体验 TouchAI
 ---
 
-TouchAI 的核心体验，不是“打开一个 AI 应用”，而是**在当前工作流里直接开始使用 AI**。
+TouchAI 打破了应用的边界，让你无需切换，即可在当前任务流中无缝调用 AI。
 
-按照下面几步，你可以在几分钟内完成第一次成功体验。
+## 开始使用
 
-## 1. 配置模型
+### 1. 配置模型
 
 第一次使用前，你需要先添加一个可用的 AI 提供商和模型。
 
-1. 在电脑右下角隐藏托盘里找到TouchAI图标，右键打开菜单栏选择设置
-![设置页面](/getting-started/quickstart/quickstart-settings.png)
-2. 进入服务商与模型,添加服务商并填写必要信息
-![服务商与模型设置页面](/getting-started/quickstart/quickstart-provider-settings.png)
-3. 刷新模型列表并选择默认模型
-![服务商与模型设置页面](/getting-started/quickstart/quickstart-provider-settings.png)
->如果你需要详细配置说明，请查看[模型配置](/settings/model-configuration/)。
+1. 在电脑右下角的托盘区找到 TouchAI 图标，右键打开菜单并进入设置
+   ![设置页面](/getting-started/quickstart/quickstart-settings.png)
+2. 进入 **服务商与模型**，添加服务商并填写必要信息
+   ![服务商与模型设置页面](/getting-started/quickstart/quickstart-provider-settings.png)
+3. 刷新模型列表，并选择一个默认模型
+   ![服务商与模型设置页面](/getting-started/quickstart/quickstart-provider-settings.png)
 
-## 2. 发起第一次对话
+如果你需要更详细的字段说明，请查看[模型配置](/settings/model-configuration/)。
+
+### 2. 发起第一次对话
 
 配置完成后，就可以开始第一次实际使用：
 
 1. 按 `Alt+Space` 唤起 TouchAI
-2. 直接输入你的问题、任务或需求
+2. 直接输入一个简单问题
 3. 按 `Enter` 发送
 4. 等待 AI 返回结果
 
 ![第一次对话示意](/getting-started/quickstart/quickstart-first-chat.png)
+
+## 成功后你会看到什么
+
+如果配置成功，通常会出现以下结果：
+
+- TouchAI 可以被 `Alt+Space` 正常唤起
+- 输入框上方已经选中了一个默认模型
+- 发送简单问题后，界面能正常返回一段回复
+- 你可以继续追问，而不需要重新配置服务商
+
+做到这一步，就说明你的第一次使用已经打通了。
+
+## 常见问题排查
+
+### 找不到托盘图标怎么办？
+
+先确认 TouchAI 已经启动。如果托盘区被折叠，请展开隐藏图标区域再查找一次。
+
+### 模型列表为空或刷不出来怎么办？
+
+优先检查这几项：
+
+- 服务商接口地址是否填写正确
+- API Key 是否有效
+- 当前网络是否能访问对应服务商
+- 保存配置后是否重新刷新了模型列表
+
+如果需要逐项核对，请查看[模型配置](/settings/model-configuration/)。
+
+### API Key 填好了还是不能用怎么办？
+
+常见原因包括：
+
+- 密钥复制时多了空格或换行
+- 服务商账号没有对应接口权限
+- 接口地址和密钥来自不同平台
+
+### `Alt+Space` 没有反应怎么办？
+
+先检查它是否与其他软件快捷键冲突，并确认 TouchAI 已正常启动、托盘图标可见。你也可以回看[快捷键](/getting-started/shortcuts/)页确认默认行为。
+
+### 发出去之后一直没有回复怎么办？
+
+- 当前默认模型是否可用
+- 网络连接是否正常
+- 服务商接口是否暂时不可用
+- 请求是否因为权限、余额或配额被拒绝

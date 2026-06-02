@@ -7,7 +7,48 @@ import path from 'node:path';
 const pkgDir = path.dirname(fileURLToPath(import.meta.url));
 const glimmPath = path.resolve(pkgDir, 'node_modules/glimm/dist/index.js');
 
-// https://astro.build/config
+const sidebar = [
+	{
+		label: '入门',
+		translations: { en: 'Getting Started' },
+		items: [
+			'getting-started/installation',
+			'getting-started/quickstart',
+			'getting-started/shortcuts',
+		],
+	},
+	{
+		label: '功能',
+		translations: { en: 'Features' },
+		items: [
+			'features/built-in-tools',
+			'features/visualization',
+			'features/file-search',
+			'features/code-and-command',
+			'features/upgrade-model',
+		],
+	},
+	{
+		label: 'MCP 服务器',
+		translations: { en: 'MCP Extensions' },
+		items: [
+			'extensions/mcp-tools',
+			'extensions/mcp-add-service',
+			'extensions/mcp-popular-scenarios',
+		],
+	},
+	{
+		label: '设置',
+		translations: { en: 'Settings' },
+		items: ['settings/model-configuration', 'settings/api-keys'],
+	},
+	{
+		label: '关于',
+		translations: { en: 'About' },
+		items: ['about/announcement', 'about/changelog', 'about/support'],
+	},
+];
+
 export default defineConfig({
 	site: 'https://touch-ai.org/',
 	vite: {
@@ -23,6 +64,17 @@ export default defineConfig({
 	integrations: [
 		starlight({
 			title: 'TouchAI',
+			locales: {
+				root: {
+					label: '简体中文',
+					lang: 'zh-CN',
+				},
+				en: {
+					label: 'English',
+					lang: 'en',
+				},
+			},
+			defaultLocale: 'root',
 			logo: {
 				light: './src/assets/touchai-docs-logo-light.svg',
 				dark: './src/assets/touchai-docs-logo-dark.svg',
@@ -30,58 +82,7 @@ export default defineConfig({
 				replacesTitle: true,
 			},
 			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/TouchAI-org/TouchAI' }],
-			sidebar: [
-				{
-					label: '入门',
-					items: [
-						{ label: '安装', slug: 'getting-started/installation' },
-						{ label: '快速开始', slug: 'getting-started/quickstart' },
-						{ label: '快捷键', slug: 'getting-started/shortcuts' },
-					],
-				},
-				{
-					label: '功能',
-					items: [
-						{ label: '内置工具', slug: 'features/built-in-tools' },
-						{ label: '文件搜索', slug: 'features/file-search' },
-						{ label: '终端操作', slug: 'features/code-and-command' },
-						{ label: '模型升级', slug: 'features/upgrade-model' },
-					],
-				},
-				{
-					label: 'MCP 扩展',
-					items: [
-						{ label: 'MCP 扩展', slug: 'extensions/mcp-tools' },
-						{ label: '热门服务', slug: 'extensions/mcp-popular-scenarios' },
-						{ label: '添加服务', slug: 'extensions/mcp-add-service' },
-					],
-				},
-				{
-					label: '展示',
-					items: [
-						{ label: '概览', slug: 'display/visual-rendering' },
-						{ label: '代码展示', slug: 'display/code-display' },
-						{ label: '图表结构', slug: 'display/diagrams' },
-					],
-				},
-				{
-					label: '设置',
-					items: [
-						{ label: '模型配置', slug: 'settings/model-configuration' },
-						{ label: '配置供应商', slug: 'settings/api-keys' },
-						{ label: '常用设置', slug: 'settings/customization' },
-
-					],
-				},
-				{
-					label: '关于',
-					items: [
-						{ label: '公告', slug: 'about/announcement' },
-						{ label: '更新日志', slug: 'about/changelog' },
-						{ label: '支持与反馈', slug: 'about/support' },
-					],
-				},
-			],
+			sidebar,
 		}),
 	],
 });
