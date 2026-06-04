@@ -95,6 +95,15 @@ function isUnsupportedInputEndpointMessage(message: string): boolean {
     );
 }
 
+function isTransportNetworkErrorMessage(message: string): boolean {
+    return (
+        message.includes('error sending request for url') ||
+        message.includes('failed to fetch') ||
+        message.includes('network') ||
+        message.includes('fetch')
+    );
+}
+
 function getDisplayMessageForText(message: string): string {
     const source = Object.values(ERROR_MESSAGES).find((candidate) => candidate === message);
     if (source) {
@@ -200,7 +209,6 @@ export class AiError extends Error {
             AiErrorCode.SERVICE_UNAVAILABLE,
             AiErrorCode.BAD_GATEWAY,
             AiErrorCode.GATEWAY_TIMEOUT,
-            AiErrorCode.API_ERROR,
             AiErrorCode.EMPTY_RESPONSE,
         ].includes(this.code);
     }
@@ -253,8 +261,8 @@ export class AiError extends Error {
             }
 
             // 网络错误
-            if (message.includes('network') || message.includes('fetch')) {
-                return new AiError(AiErrorCode.NETWORK_ERROR, error, originalMessage, {
+            if (isTransportNetworkErrorMessage(message)) {
+                return new AiError(AiErrorCode.NETWORK_ERROR, error, undefined, {
                     cause,
                 });
             }
