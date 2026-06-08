@@ -5,6 +5,7 @@ build/
 *.min.*
 coverage/
 .coverage/
+.vite-cache/
 
 # Drizzle 生成的迁移文件
 apps/desktop/src/database/drizzle/

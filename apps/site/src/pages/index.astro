@@ -28,7 +28,8 @@ const docsUrl = 'https://touch-ai.org/getting-started';
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="TouchAI" />
         <meta name="twitter:description" content="一触即达的桌面效率Agent" />
-        <link rel="icon" type="image/svg+xml" href="/touchai-wordmark.svg" />
+        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="shortcut icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/touchai-wordmark.svg" />
         <meta name="theme-color" content="#ffffff" />
         {
@@ -1144,6 +1145,33 @@ const docsUrl = 'https://touch-ai.org/getting-started';
                     padding: 28px 18px 34px;
                 }
 
+                .visual-section {
+                    min-height: auto;
+                    padding: 48px 0 64px;
+                }
+
+                .visual-shell {
+                    min-height: auto;
+                    display: block;
+                    padding: 24px 0;
+                }
+
+                .visual-stage {
+                    height: auto;
+                    min-height: auto;
+                    display: grid;
+                    place-items: center;
+                    overflow: visible;
+                }
+
+                .component-frame {
+                    width: min(60vw, 520px, 100%);
+                    height: auto;
+                    aspect-ratio: 760 / 657;
+                    max-height: min(62vh, 657px);
+                    min-height: 0;
+                }
+
                 .feature-block-shell,
                 .scenario-grid,
                 .quote-row {
@@ -1161,6 +1189,8 @@ const docsUrl = 'https://touch-ai.org/getting-started';
                     grid-template-columns: 1fr;
                     min-height: auto;
                     gap: 0;
+                    overflow: hidden;
+                    border-radius: 22px;
                 }
 
                 .feature-block.reverse .feature-block-shell {
@@ -1184,7 +1214,17 @@ const docsUrl = 'https://touch-ai.org/getting-started';
                 .feature-block .feature-media:first-child,
                 .feature-block .feature-copy:last-child,
                 .feature-block .feature-media:last-child {
-                    border-radius: 22px;
+                    border-radius: 0;
+                }
+
+                .feature-block:not(.reverse) .feature-copy,
+                .feature-block.reverse .feature-copy {
+                    border-radius: 22px 22px 0 0;
+                }
+
+                .feature-block:not(.reverse) .feature-media,
+                .feature-block.reverse .feature-media {
+                    border-radius: 0 0 22px 22px;
                 }
 
                 .feature-copy {
@@ -1201,7 +1241,7 @@ const docsUrl = 'https://touch-ai.org/getting-started';
                 .feature-media {
                     min-height: 430px;
                     padding: 22px 0 30px;
-                    border-radius: 22px;
+                    border-radius: 0;
                     overflow: hidden;
                 }
 
@@ -1296,7 +1336,7 @@ const docsUrl = 'https://touch-ai.org/getting-started';
 
                 .visual-stage {
                     height: auto;
-                    min-height: 560px;
+                    min-height: auto;
                     display: grid;
                     place-items: center;
                     overflow: visible;
@@ -1304,8 +1344,10 @@ const docsUrl = 'https://touch-ai.org/getting-started';
 
                 .component-frame {
                     width: min(100%, 360px);
-                    height: 560px;
-                    min-height: 560px;
+                    height: auto;
+                    aspect-ratio: 760 / 657;
+                    max-height: min(58vh, 420px);
+                    min-height: 0;
                     max-width: 360px;
                 }
 
@@ -1325,7 +1367,8 @@ const docsUrl = 'https://touch-ai.org/getting-started';
 
                 .feature-block-shell {
                     display: grid;
-                    gap: 12px;
+                    gap: 0;
+                    border-radius: 20px;
                 }
 
                 .feature-copy {
@@ -1342,6 +1385,16 @@ const docsUrl = 'https://touch-ai.org/getting-started';
                     min-height: 356px;
                     padding: 18px 0 24px;
                     overflow: hidden;
+                }
+
+                .feature-block:not(.reverse) .feature-copy,
+                .feature-block.reverse .feature-copy {
+                    border-radius: 20px 20px 0 0;
+                }
+
+                .feature-block:not(.reverse) .feature-media,
+                .feature-block.reverse .feature-media {
+                    border-radius: 0 0 20px 20px;
                 }
 
                 .feature-component-card,
@@ -2378,64 +2431,26 @@ const docsUrl = 'https://touch-ai.org/getting-started';
                     });
                 });
 
-                document.querySelectorAll('a.interactive-click').forEach((target) => {
-                    target.addEventListener('click', (event) => {
-                        const href = target.getAttribute('href');
-                        if (!href || target.dataset.glimmSkip === 'true') return;
-                        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
-                            return;
-                        event.preventDefault();
-                        target.classList.remove('is-pressing');
-
-                        const isExternal = target.target === '_blank' || /^https?:\/\//.test(href);
-                        playGlimmSweep(() => {
-                            if (href.startsWith('#')) {
-                                const destination = document.querySelector(href);
-                                if (destination) {
-                                    destination.scrollIntoView({
-                                        behavior: 'smooth',
-                                        block: 'start',
-                                    });
-                                }
-                                if (history.replaceState) {
-                                    history.replaceState(null, '', href);
-                                }
-                                return;
-                            }
-                            if (isExternal) {
-                                window.open(href, target.target || '_blank', 'noopener,noreferrer');
-                                return;
-                            }
-                            window.location.href = href;
-                        });
-                    });
-                });
-
-                document.querySelectorAll('button.interactive-click').forEach((target) => {
+                document.querySelectorAll('.theme-toggle, .lang-toggle').forEach((target) => {
                     target.addEventListener(
                         'click',
                         (event) => {
-                            if (target.dataset.glimmBound === 'true') return;
-                            if (target.closest('.theme-toggle') || target.closest('.lang-toggle')) {
-                                event.stopImmediatePropagation();
-                                event.preventDefault();
-                                target.classList.remove('is-pressing');
-                                playGlimmSweep(() => {
-                                    if (target.classList.contains('theme-toggle')) {
-                                        setTheme(
-                                            document.documentElement.dataset.theme === 'dark'
-                                                ? 'light'
-                                                : 'dark'
-                                        );
-                                        return;
-                                    }
-                                    if (target.classList.contains('lang-toggle')) {
-                                        const nextLanguage =
-                                            document.documentElement.lang === 'en' ? 'zh' : 'en';
-                                        setLanguage(nextLanguage);
-                                    }
-                                });
-                            }
+                            event.stopImmediatePropagation();
+                            event.preventDefault();
+                            target.classList.remove('is-pressing');
+                            playGlimmSweep(() => {
+                                if (target.classList.contains('theme-toggle')) {
+                                    setTheme(
+                                        document.documentElement.dataset.theme === 'dark'
+                                            ? 'light'
+                                            : 'dark'
+                                    );
+                                    return;
+                                }
+                                const nextLanguage =
+                                    document.documentElement.lang === 'en' ? 'zh' : 'en';
+                                setLanguage(nextLanguage);
+                            });
                         },
                         true
                     );
