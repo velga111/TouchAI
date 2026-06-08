@@ -38,6 +38,7 @@ describe('shortcut utilities', () => {
         expect(normalizeLocalShortcutString('f12')).toBe('F12');
         expect(normalizeLocalShortcutString(null)).toBeNull();
         expect(normalizeLocalShortcutString('Ctrl+Alt')).toBeNull();
+        expect(normalizeLocalShortcutString('Ctrl+A+B')).toBeNull();
         expect(normalizeLocalShortcutString('   ')).toBeNull();
     });
 

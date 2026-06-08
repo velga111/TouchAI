@@ -157,6 +157,9 @@ function createShortcutParts(shortcut: string): { modifiers: string[]; key: stri
             continue;
         }
 
+        if (key) {
+            return { modifiers: [], key: null };
+        }
         key = part;
     }
 
