@@ -834,6 +834,7 @@ export function createSearchKeydownHandler(options: UseSearchKeyboardOptions) {
 
         const handledByRouter = keyboardRouter.route({
             key: event.key,
+            code: event.code,
             shiftKey: event.shiftKey,
             ctrlKey: event.ctrlKey,
             metaKey: event.metaKey,

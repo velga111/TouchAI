@@ -19,6 +19,7 @@ export interface SearchKeybindingDefinition {
     descriptionKey: MessageKey;
     defaultShortcut: string | null;
     allowDisable: boolean;
+    allowModifierlessFunctionShortcut: boolean;
 }
 
 export type SearchKeybindings = Record<SearchKeybindingActionId, string | null>;
@@ -30,6 +31,7 @@ export const SEARCH_KEYBINDING_DEFINITIONS: SearchKeybindingDefinition[] = [
         descriptionKey: 'settings.general.searchActionDescriptions.history',
         defaultShortcut: 'Mod+H',
         allowDisable: true,
+        allowModifierlessFunctionShortcut: true,
     },
     {
         id: 'search.input.focus',
@@ -37,6 +39,7 @@ export const SEARCH_KEYBINDING_DEFINITIONS: SearchKeybindingDefinition[] = [
         descriptionKey: 'settings.general.searchActionDescriptions.focusInput',
         defaultShortcut: 'Mod+L',
         allowDisable: true,
+        allowModifierlessFunctionShortcut: true,
     },
     {
         id: 'search.session.new',
@@ -44,6 +47,7 @@ export const SEARCH_KEYBINDING_DEFINITIONS: SearchKeybindingDefinition[] = [
         descriptionKey: 'settings.general.searchActionDescriptions.newSession',
         defaultShortcut: 'Mod+N',
         allowDisable: true,
+        allowModifierlessFunctionShortcut: true,
     },
     {
         id: 'search.session.reopenLastClosed',
@@ -51,6 +55,7 @@ export const SEARCH_KEYBINDING_DEFINITIONS: SearchKeybindingDefinition[] = [
         descriptionKey: 'settings.general.searchActionDescriptions.reopenLastClosedSession',
         defaultShortcut: 'Mod+Up',
         allowDisable: true,
+        allowModifierlessFunctionShortcut: true,
     },
     {
         id: 'search.model.toggle',
@@ -58,6 +63,7 @@ export const SEARCH_KEYBINDING_DEFINITIONS: SearchKeybindingDefinition[] = [
         descriptionKey: 'settings.general.searchActionDescriptions.modelToggle',
         defaultShortcut: 'Mod+M',
         allowDisable: true,
+        allowModifierlessFunctionShortcut: true,
     },
     {
         id: 'search.window.pin',
@@ -65,6 +71,7 @@ export const SEARCH_KEYBINDING_DEFINITIONS: SearchKeybindingDefinition[] = [
         descriptionKey: 'settings.general.searchActionDescriptions.windowPin',
         defaultShortcut: 'Mod+P',
         allowDisable: true,
+        allowModifierlessFunctionShortcut: true,
     },
     {
         id: 'search.window.maximize',
@@ -72,6 +79,7 @@ export const SEARCH_KEYBINDING_DEFINITIONS: SearchKeybindingDefinition[] = [
         descriptionKey: 'settings.general.searchActionDescriptions.windowMaximize',
         defaultShortcut: 'F11',
         allowDisable: true,
+        allowModifierlessFunctionShortcut: true,
     },
 ];
 

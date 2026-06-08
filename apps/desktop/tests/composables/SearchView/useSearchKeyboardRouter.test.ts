@@ -114,6 +114,20 @@ describe('createSearchKeyboardRouter', () => {
         expect(callbacks.onSearchKeybindingAction).toHaveBeenCalledWith('search.history.open');
     });
 
+    it('routes function-row search shortcuts by keyboard code when the key value is remapped', async () => {
+        const { router, callbacks } = createKeyboardRouter({
+            getSearchKeybindings: () => ({
+                ...createDefaultSearchKeybindings(),
+                'search.history.open': 'F2',
+            }),
+        });
+
+        expect(router.route({ key: 'BrightnessUp', code: 'F2' })).toBe(true);
+        await flushAsyncWork();
+
+        expect(callbacks.onSearchKeybindingAction).toHaveBeenCalledWith('search.history.open');
+    });
+
     it('routes the default Ctrl+Up shortcut through the action callback', async () => {
         const { router, callbacks } = createKeyboardRouter({
             getSearchKeybindings: () => createDefaultSearchKeybindings(),

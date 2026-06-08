@@ -1,5 +1,6 @@
 export interface ShortcutMatchInput {
     key: string;
+    code?: string;
     ctrlKey?: boolean;
     metaKey?: boolean;
     altKey?: boolean;
@@ -116,6 +117,32 @@ function normalizeEventKey(key: string): string | null {
     return normalizeShortcutToken(mappedKey);
 }
 
+function normalizeFunctionKeyCode(code: string | null | undefined): string | null {
+    if (!code) {
+        return null;
+    }
+
+    const trimmedCode = code.trim();
+    if (!/^F\d{1,2}$/i.test(trimmedCode)) {
+        return null;
+    }
+
+    return trimmedCode.toUpperCase();
+}
+
+export function resolveKeyboardEventShortcutKey(
+    key: string | null | undefined,
+    code?: string | null
+): string | null {
+    const normalizedKey = normalizeEventKey(key ?? '');
+    const normalizedFunctionKeyCode = normalizeFunctionKeyCode(code);
+    if (normalizedFunctionKeyCode && (!normalizedKey || !/^F\d{1,2}$/.test(normalizedKey))) {
+        return normalizedFunctionKeyCode;
+    }
+
+    return normalizedKey;
+}
+
 function createShortcutParts(shortcut: string): { modifiers: string[]; key: string | null } {
     const parts = shortcut
         .split('+')
@@ -186,7 +213,7 @@ export function matchShortcut(
     }
 
     const { modifiers, key } = createShortcutParts(normalized);
-    const eventKey = normalizeEventKey(input.key);
+    const eventKey = resolveKeyboardEventShortcutKey(input.key, input.code);
     if (!eventKey || eventKey !== key) {
         return false;
     }
@@ -236,7 +263,7 @@ export function captureShortcutFromKeyboardEvent(
         return null;
     }
 
-    const key = normalizeEventKey(event.key);
+    const key = resolveKeyboardEventShortcutKey(event.key, event.code);
     if (!key) {
         return null;
     }

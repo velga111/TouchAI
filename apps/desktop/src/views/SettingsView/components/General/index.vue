@@ -520,7 +520,9 @@
         const normalizedShortcut =
             shortcut === null ? null : normalizeLocalShortcutString(shortcut);
         if (normalizedShortcut) {
+            const definition = getSearchKeybindingDefinition(actionId);
             const allowsModifierlessFunctionShortcut =
+                definition.allowModifierlessFunctionShortcut &&
                 isModifierlessFunctionShortcut(normalizedShortcut);
 
             if (!hasRequiredModifier(normalizedShortcut) && !allowsModifierlessFunctionShortcut) {

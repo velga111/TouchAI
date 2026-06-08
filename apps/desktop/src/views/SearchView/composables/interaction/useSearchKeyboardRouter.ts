@@ -14,6 +14,7 @@ interface PendingApprovalState {
 
 export interface SearchKeyboardRouteInput {
     key: string;
+    code?: string;
     shiftKey?: boolean;
     ctrlKey?: boolean;
     metaKey?: boolean;
@@ -84,10 +85,7 @@ function isTypingAttemptDuringApproval(input: SearchKeyboardRouteInput) {
 
 function resolveSearchKeybindingAction(
     input: SearchKeyboardRouteInput,
-    keybindings: SearchKeybindings,
-    _context: {
-        isLoading: boolean;
-    }
+    keybindings: SearchKeybindings
 ): SearchKeybindingActionId | null {
     for (const [actionId, shortcut] of Object.entries(keybindings) as Array<
         [SearchKeybindingActionId, string | null]
@@ -170,13 +168,7 @@ export function createSearchKeyboardRouter(options: CreateSearchKeyboardRouterOp
             }
         }
 
-        const searchKeybindingAction = resolveSearchKeybindingAction(
-            input,
-            getSearchKeybindings(),
-            {
-                isLoading: isLoading(),
-            }
-        );
+        const searchKeybindingAction = resolveSearchKeybindingAction(input, getSearchKeybindings());
         if (searchKeybindingAction) {
             runKeyboardEffect(() => onSearchKeybindingAction(searchKeybindingAction));
             return true;

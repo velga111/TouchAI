@@ -330,7 +330,7 @@ describe('SettingsGeneralSection', () => {
         expect(settingsStoreMock.updateGlobalShortcut).not.toHaveBeenCalled();
         expect((input.element as HTMLInputElement).value).toBe('Alt+Space');
     });
-    it('accepts modifierless F1-F12 for configurable search shortcuts', async () => {
+    it('accepts modifierless function keys for configurable search shortcuts', async () => {
         settingsStoreMock.settings.value.searchKeybindings['search.history.open'] = 'Mod+Shift+H';
         const wrapper = mount(GeneralSection);
 
@@ -347,6 +347,26 @@ describe('SettingsGeneralSection', () => {
         expect(settingsStoreMock.updateSearchKeybindings).toHaveBeenCalledWith({
             ...settingsStoreMock.settings.value.searchKeybindings,
             'search.history.open': 'F1',
+        });
+    });
+
+    it('captures a function-row key by keyboard code when the key value is not an F-key', async () => {
+        settingsStoreMock.settings.value.searchKeybindings['search.history.open'] = 'Mod+Shift+H';
+        const wrapper = mount(GeneralSection);
+
+        await flushPromises();
+
+        const input = wrapper.get(
+            '[data-testid="settings-search-shortcut-input-search.history.open"]'
+        );
+        await input.trigger('focus');
+        await flushPromises();
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'BrightnessUp', code: 'F2' }));
+        await flushPromises();
+
+        expect(settingsStoreMock.updateSearchKeybindings).toHaveBeenCalledWith({
+            ...settingsStoreMock.settings.value.searchKeybindings,
+            'search.history.open': 'F2',
         });
     });
 
