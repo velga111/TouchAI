@@ -75,49 +75,6 @@ describe('settings search keybindings state', () => {
             key: 'search_keybindings',
             value: JSON.stringify(createDefaultSearchKeybindings()),
         });
-        expect(store.settings.lastClosedSessionId).toBeNull();
-    });
-
-    it('loads and updates the persisted last closed session id', async () => {
-        mockSettings({
-            last_closed_session_id: '42',
-        });
-
-        const { useSettingsStore } = await import('@/stores/settings');
-        const store = useSettingsStore();
-
-        await store.initialize();
-
-        expect(store.settings.lastClosedSessionId).toBe(42);
-
-        await store.updateLastClosedSessionId(108);
-
-        expect(store.settings.lastClosedSessionId).toBe(108);
-        expect(setSettingMock).toHaveBeenLastCalledWith({
-            key: 'last_closed_session_id',
-            value: '108',
-        });
-    });
-
-    it('ignores invalid persisted and updated session ids', async () => {
-        mockSettings({
-            last_closed_session_id: '-1',
-        });
-
-        const { useSettingsStore } = await import('@/stores/settings');
-        const store = useSettingsStore();
-
-        await store.initialize();
-
-        expect(store.settings.lastClosedSessionId).toBeNull();
-
-        await store.updateLastClosedSessionId(0);
-
-        expect(store.settings.lastClosedSessionId).toBeNull();
-        expect(setSettingMock).toHaveBeenLastCalledWith({
-            key: 'last_closed_session_id',
-            value: '',
-        });
     });
 
     it('loads persisted search keybindings and merges missing defaults', async () => {

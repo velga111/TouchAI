@@ -15,7 +15,6 @@ const {
     eventHandlers,
     listSessionsMock,
     notifyMock,
-    settingsStoreMock,
     useAgentMock,
 } = vi.hoisted(() => {
     const callbacksHolder: { current: Record<string, unknown> | null } = { current: null };
@@ -33,13 +32,6 @@ const {
         approvePendingToolApproval: vi.fn(() => true),
         rejectPendingToolApproval: vi.fn(() => true),
     };
-    const settingsStore = {
-        lastClosedSessionId: null as number | null,
-        updateLastClosedSessionId: vi.fn(async (sessionId: number | null) => {
-            settingsStore.lastClosedSessionId = sessionId;
-        }),
-    };
-
     return {
         agentCallbacks: callbacksHolder,
         agentState: agent,
@@ -47,7 +39,6 @@ const {
         eventHandlers: handlers,
         listSessionsMock: vi.fn().mockResolvedValue([]),
         notifyMock: vi.fn(),
-        settingsStoreMock: settingsStore,
         useAgentMock: vi.fn((callbacks: Record<string, unknown>) => {
             callbacksHolder.current = callbacks;
             return agent;
@@ -61,10 +52,6 @@ vi.mock('@composables/agent', () => ({
 
 vi.mock('@services/NotificationService', () => ({
     notify: notifyMock,
-}));
-
-vi.mock('@/stores/settings', () => ({
-    useSettingsStore: () => settingsStoreMock,
 }));
 
 vi.mock('@services/AgentService/session', async () => {
@@ -142,9 +129,6 @@ describe('useSearchRequestFlow', () => {
         agentState.currentSessionId.value = null;
         agentState.sessionHistory.value = [];
         agentState.pendingToolApproval.value = null;
-        settingsStoreMock.lastClosedSessionId = null;
-        settingsStoreMock.updateLastClosedSessionId.mockClear();
-
         listSessionsMock.mockResolvedValue([]);
         dismissSessionTerminalStatusMock.mockResolvedValue(undefined);
         agentState.sendRequest.mockResolvedValue(undefined);
@@ -449,8 +433,6 @@ describe('useSearchRequestFlow', () => {
         mounted.result.clearSession();
 
         expect(agentState.clearSession).toHaveBeenCalledTimes(1);
-        expect(settingsStoreMock.updateLastClosedSessionId).toHaveBeenCalledWith(23);
-        expect(settingsStoreMock.lastClosedSessionId).toBe(23);
 
         agentState.currentSessionId.value = null;
         agentState.openSession.mockImplementationOnce(async () => {
@@ -472,8 +454,10 @@ describe('useSearchRequestFlow', () => {
             modelId: 'gpt-5',
             providerId: 9,
         });
-        expect(settingsStoreMock.updateLastClosedSessionId).toHaveBeenLastCalledWith(null);
-        expect(settingsStoreMock.lastClosedSessionId).toBeNull();
+
+        const secondReopenAttempt = await mounted.result.reopenLastClosedSession();
+        expect(secondReopenAttempt).toBeNull();
+        expect(agentState.openSession).toHaveBeenCalledTimes(1);
 
         mounted.unmount();
     });
@@ -504,7 +488,6 @@ describe('useSearchRequestFlow', () => {
         expect(agentState.openSession).not.toHaveBeenCalled();
         expect(clearDraft).not.toHaveBeenCalled();
         expect(reopenedSession).toBeNull();
-        expect(settingsStoreMock.updateLastClosedSessionId).not.toHaveBeenCalledWith(null);
 
         mounted.unmount();
     });
@@ -515,8 +498,6 @@ describe('useSearchRequestFlow', () => {
             providerId: null,
         });
         const openError = new Error('database unavailable');
-        settingsStoreMock.lastClosedSessionId = 23;
-        agentState.openSession.mockRejectedValueOnce(openError);
 
         const mounted = await mountComposable(() =>
             useSearchRequestFlow({
@@ -532,10 +513,24 @@ describe('useSearchRequestFlow', () => {
             })
         );
 
+        agentState.currentSessionId.value = 23;
+        mounted.result.clearSession();
+        agentState.currentSessionId.value = null;
+        agentState.openSession.mockRejectedValueOnce(openError);
+
         await expect(mounted.result.reopenLastClosedSession()).rejects.toThrow(openError);
 
-        expect(settingsStoreMock.updateLastClosedSessionId).not.toHaveBeenCalledWith(null);
-        expect(settingsStoreMock.lastClosedSessionId).toBe(23);
+        agentState.openSession.mockResolvedValueOnce({
+            sessionId: 23,
+            title: 'Reopened Session',
+            modelId: 'gpt-5',
+            providerId: 9,
+        });
+
+        await mounted.result.reopenLastClosedSession();
+
+        expect(agentState.openSession).toHaveBeenCalledTimes(2);
+        expect(agentState.openSession).toHaveBeenLastCalledWith(23);
 
         mounted.unmount();
     });
@@ -546,8 +541,6 @@ describe('useSearchRequestFlow', () => {
             providerId: null,
         });
         const openError = new Error('Session 23 not found');
-        settingsStoreMock.lastClosedSessionId = 23;
-        agentState.openSession.mockRejectedValueOnce(openError);
 
         const mounted = await mountComposable(() =>
             useSearchRequestFlow({
@@ -563,10 +556,16 @@ describe('useSearchRequestFlow', () => {
             })
         );
 
+        agentState.currentSessionId.value = 23;
+        mounted.result.clearSession();
+        agentState.currentSessionId.value = null;
+        agentState.openSession.mockRejectedValueOnce(openError);
+
         await expect(mounted.result.reopenLastClosedSession()).rejects.toThrow(openError);
 
-        expect(settingsStoreMock.updateLastClosedSessionId).toHaveBeenCalledWith(null);
-        expect(settingsStoreMock.lastClosedSessionId).toBeNull();
+        const secondReopenAttempt = await mounted.result.reopenLastClosedSession();
+        expect(secondReopenAttempt).toBeNull();
+        expect(agentState.openSession).toHaveBeenCalledTimes(1);
 
         mounted.unmount();
     });
@@ -577,7 +576,6 @@ describe('useSearchRequestFlow', () => {
             providerId: null,
         });
         const clearDraft = vi.fn();
-        settingsStoreMock.lastClosedSessionId = 23;
         agentState.currentSessionId.value = 23;
 
         const mounted = await mountComposable(() =>
@@ -594,64 +592,13 @@ describe('useSearchRequestFlow', () => {
             })
         );
 
+        mounted.result.clearSession();
         const reopenedSession = await mounted.result.reopenLastClosedSession();
 
         expect(agentState.openSession).not.toHaveBeenCalled();
         expect(clearDraft).not.toHaveBeenCalled();
         expect(reopenedSession).toBeNull();
 
-        mounted.unmount();
-    });
-
-    it('still returns a reopened session when clearing last-closed metadata fails', async () => {
-        const modelOverride = ref({
-            modelId: null,
-            providerId: null,
-        });
-        settingsStoreMock.lastClosedSessionId = 23;
-        settingsStoreMock.updateLastClosedSessionId.mockRejectedValueOnce(
-            new Error('database unavailable')
-        );
-        agentState.openSession.mockImplementationOnce(async () => {
-            agentState.currentSessionId.value = 23;
-            return {
-                sessionId: 23,
-                title: 'Reopened Session',
-                modelId: 'gpt-5',
-                providerId: 9,
-            };
-        });
-
-        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-        const mounted = await mountComposable(() =>
-            useSearchRequestFlow({
-                modelOverride,
-                clearDraft: vi.fn(),
-                getSupportedAttachments: () => [],
-                getUnsupportedAttachmentMessage: () => null,
-                getCurrentInputSnapshot: (query) =>
-                    createInputHistorySnapshot({
-                        text: query,
-                        attachments: [],
-                    }),
-            })
-        );
-
-        const reopenedSession = await mounted.result.reopenLastClosedSession();
-
-        expect(reopenedSession).toEqual({
-            sessionId: 23,
-            title: 'Reopened Session',
-            modelId: 'gpt-5',
-            providerId: 9,
-        });
-        expect(settingsStoreMock.updateLastClosedSessionId).toHaveBeenCalledWith(null);
-        expect(consoleErrorSpy).toHaveBeenCalledWith(
-            '[SearchView] Failed to clear last closed session id:',
-            expect.any(Error)
-        );
-
-        consoleErrorSpy.mockRestore();
         mounted.unmount();
     });
 

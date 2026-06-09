@@ -14,7 +14,6 @@ import {
 import { dismissSessionTerminalStatus, listSessions } from '@/services/AgentService/session';
 import { eventService } from '@/services/EventService';
 import { AppEvent } from '@/services/EventService/types';
-import { useSettingsStore } from '@/stores/settings';
 import {
     createInputHistorySnapshot,
     type InputHistorySnapshot,
@@ -74,7 +73,7 @@ export function useSearchRequestFlow(options: UseSearchRequestFlowOptions) {
     const sessionList = ref<SessionEntity[]>([]);
     const sessionListQuery = ref('');
     const isSessionListLoading = ref(false);
-    const settingsStore = useSettingsStore();
+    const lastClosedSessionId = ref<number | null>(null);
     let sessionListRequestId = 0;
     let sessionListLoadPromise: Promise<void> | null = null;
     let sessionListInFlightKey: string | null = null;
@@ -232,9 +231,7 @@ export function useSearchRequestFlow(options: UseSearchRequestFlowOptions) {
 
     function clearSessionState() {
         if (currentSessionId.value !== null) {
-            void settingsStore.updateLastClosedSessionId(currentSessionId.value).catch((error) => {
-                console.error('[SearchView] Failed to persist last closed session id:', error);
-            });
+            lastClosedSessionId.value = currentSessionId.value;
         }
         clearPendingRequestState();
         clearSession();
@@ -399,12 +396,8 @@ export function useSearchRequestFlow(options: UseSearchRequestFlowOptions) {
         clearDraft();
     }
 
-    async function clearLastClosedSessionIdSafely() {
-        try {
-            await settingsStore.updateLastClosedSessionId(null);
-        } catch (error) {
-            console.error('[SearchView] Failed to clear last closed session id:', error);
-        }
+    function clearLastClosedSessionId() {
+        lastClosedSessionId.value = null;
     }
 
     function isSessionNotFoundError(error: unknown, sessionId: number): boolean {
@@ -412,7 +405,7 @@ export function useSearchRequestFlow(options: UseSearchRequestFlowOptions) {
     }
 
     async function reopenLastClosedSession(): Promise<LoadedSessionInfo | null> {
-        const sessionId = settingsStore.lastClosedSessionId;
+        const sessionId = lastClosedSessionId.value;
         if (sessionId === null || sessionId === currentSessionId.value) {
             return null;
         }
@@ -420,12 +413,12 @@ export function useSearchRequestFlow(options: UseSearchRequestFlowOptions) {
         try {
             const loadedSession = await openSession(sessionId);
             if (currentSessionId.value === sessionId) {
-                await clearLastClosedSessionIdSafely();
+                clearLastClosedSessionId();
             }
             return loadedSession;
         } catch (error) {
             if (isSessionNotFoundError(error, sessionId)) {
-                await clearLastClosedSessionIdSafely();
+                clearLastClosedSessionId();
             }
             throw error;
         }
