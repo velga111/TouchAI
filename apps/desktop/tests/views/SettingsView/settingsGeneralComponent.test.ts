@@ -2,22 +2,16 @@ import type { AppUpdateState } from '@services/AppUpdateService/types';
 import { flushPromises, mount } from '@vue/test-utils';
 import { vi } from 'vitest';
 
+import { createDefaultSearchKeybindings } from '@/config/searchKeybindings';
 import { setLocale } from '@/i18n';
 import GeneralSection from '@/views/SettingsView/components/General/index.vue';
 
 const settingsStoreMock = vi.hoisted(() => {
-    const createGeneralSettingsMock = () => ({
+    const createGeneralSettingsMock = (searchKeybindings: Record<string, string | null>) => ({
         globalShortcut: 'Alt+Space',
         searchKeybindings: {
-            'search.history.open': 'Mod+H',
-            'search.input.focus': 'Mod+L',
-            'search.session.new': 'Mod+N',
-            'search.session.reopenLastClosed': 'Mod+Shift+T',
-            'search.model.toggle': 'Mod+M',
-            'search.window.pin': 'Mod+P',
-            'search.window.maximize': 'F11',
-            'search.settings.open': 'Mod+,',
-        } as Record<string, string | null>,
+            ...searchKeybindings,
+        },
         startOnBoot: false,
         startMinimized: true,
         language: 'zh-CN',
@@ -32,7 +26,7 @@ const settingsStoreMock = vi.hoisted(() => {
     return {
         createGeneralSettingsMock,
         settings: {
-            value: createGeneralSettingsMock(),
+            value: createGeneralSettingsMock({}),
         },
         initialize: vi.fn().mockResolvedValue(undefined),
         updateGlobalShortcut: vi.fn().mockResolvedValue(undefined),
@@ -188,7 +182,9 @@ describe('SettingsGeneralSection', () => {
         appUpdateServiceMock.state = appUpdateServiceMock.createState();
         nativeMock.shortcut.getShortcutStatus.mockResolvedValue([false, null]);
         nativeMock.autostart.isAutostartEnabled.mockResolvedValue(false);
-        settingsStoreMock.settings.value = settingsStoreMock.createGeneralSettingsMock();
+        settingsStoreMock.settings.value = settingsStoreMock.createGeneralSettingsMock(
+            createDefaultSearchKeybindings()
+        );
     });
 
     it('renders the general settings groups and row controls', async () => {

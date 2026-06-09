@@ -5,7 +5,7 @@
 import { useAgent } from '@composables/agent';
 import type { SessionEntity } from '@database/types';
 import { notify } from '@services/NotificationService';
-import { onUnmounted, type Ref, ref, watch } from 'vue';
+import { onUnmounted, type Ref, ref } from 'vue';
 
 import {
     type Index,
@@ -230,24 +230,6 @@ export function useSearchRequestFlow(options: UseSearchRequestFlowOptions) {
         stopSessionStatusListener = null;
     });
 
-    watch(
-        () => currentSessionId.value,
-        (sessionId) => {
-            persistLastActiveSessionId(sessionId);
-        },
-        { flush: 'sync' }
-    );
-
-    function persistLastActiveSessionId(sessionId: number | null) {
-        if (sessionId === null || settingsStore.lastActiveSessionId === sessionId) {
-            return;
-        }
-
-        void settingsStore.updateLastActiveSessionId(sessionId).catch((error) => {
-            console.error('[SearchView] Failed to persist last active session id:', error);
-        });
-    }
-
     function clearSessionState() {
         if (currentSessionId.value !== null) {
             void settingsStore.updateLastClosedSessionId(currentSessionId.value).catch((error) => {
@@ -425,6 +407,10 @@ export function useSearchRequestFlow(options: UseSearchRequestFlowOptions) {
         }
     }
 
+    function isSessionNotFoundError(error: unknown, sessionId: number): boolean {
+        return error instanceof Error && error.message === `Session ${sessionId} not found`;
+    }
+
     async function reopenLastClosedSession(): Promise<LoadedSessionInfo | null> {
         const sessionId = settingsStore.lastClosedSessionId;
         if (sessionId === null || sessionId === currentSessionId.value) {
@@ -438,7 +424,9 @@ export function useSearchRequestFlow(options: UseSearchRequestFlowOptions) {
             }
             return loadedSession;
         } catch (error) {
-            await clearLastClosedSessionIdSafely();
+            if (isSessionNotFoundError(error, sessionId)) {
+                await clearLastClosedSessionIdSafely();
+            }
             throw error;
         }
     }
@@ -458,7 +446,6 @@ export function useSearchRequestFlow(options: UseSearchRequestFlowOptions) {
         // 否则新会话会错误继承旧会话的“等待发送”锁态。
         clearPendingRequestState();
         clearDraft({ preserveModelTag: true });
-        persistLastActiveSessionId(sessionId);
         modelOverride.value = {
             modelId: loadedSession.modelId,
             providerId: loadedSession.providerId,

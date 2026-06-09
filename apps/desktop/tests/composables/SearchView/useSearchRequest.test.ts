@@ -35,12 +35,8 @@ const {
     };
     const settingsStore = {
         lastClosedSessionId: null as number | null,
-        lastActiveSessionId: null as number | null,
         updateLastClosedSessionId: vi.fn(async (sessionId: number | null) => {
             settingsStore.lastClosedSessionId = sessionId;
-        }),
-        updateLastActiveSessionId: vi.fn(async (sessionId: number | null) => {
-            settingsStore.lastActiveSessionId = sessionId;
         }),
     };
 
@@ -147,9 +143,7 @@ describe('useSearchRequestFlow', () => {
         agentState.sessionHistory.value = [];
         agentState.pendingToolApproval.value = null;
         settingsStoreMock.lastClosedSessionId = null;
-        settingsStoreMock.lastActiveSessionId = null;
         settingsStoreMock.updateLastClosedSessionId.mockClear();
-        settingsStoreMock.updateLastActiveSessionId.mockClear();
 
         listSessionsMock.mockResolvedValue([]);
         dismissSessionTerminalStatusMock.mockResolvedValue(undefined);
@@ -349,7 +343,6 @@ describe('useSearchRequestFlow', () => {
             modelId: 'gpt-5',
             providerId: 9,
         });
-        expect(settingsStoreMock.updateLastActiveSessionId).toHaveBeenCalledWith(7);
 
         mounted.unmount();
     });
@@ -393,8 +386,6 @@ describe('useSearchRequestFlow', () => {
             modelId: 'stale-model',
             providerId: 2,
         });
-        expect(settingsStoreMock.updateLastActiveSessionId).not.toHaveBeenCalledWith(7);
-
         mounted.unmount();
     });
 
@@ -425,7 +416,6 @@ describe('useSearchRequestFlow', () => {
         expect(agentState.openSession).not.toHaveBeenCalled();
         expect(clearDraft).not.toHaveBeenCalled();
         expect(dismissSessionTerminalStatusMock).not.toHaveBeenCalledWith(7);
-        expect(settingsStoreMock.updateLastActiveSessionId).not.toHaveBeenCalledWith(7);
         expect(loadedSession).toEqual({
             sessionId: 7,
             title: '',
@@ -488,13 +478,12 @@ describe('useSearchRequestFlow', () => {
         mounted.unmount();
     });
 
-    it('does not fall back to the last active session when no closed session is recorded', async () => {
+    it('does not reopen when no closed session is recorded', async () => {
         const modelOverride = ref({
             modelId: null,
             providerId: null,
         });
         const clearDraft = vi.fn();
-        settingsStoreMock.lastActiveSessionId = 45;
 
         const mounted = await mountComposable(() =>
             useSearchRequestFlow({
@@ -516,6 +505,68 @@ describe('useSearchRequestFlow', () => {
         expect(clearDraft).not.toHaveBeenCalled();
         expect(reopenedSession).toBeNull();
         expect(settingsStoreMock.updateLastClosedSessionId).not.toHaveBeenCalledWith(null);
+
+        mounted.unmount();
+    });
+
+    it('keeps the last closed session id when reopening fails with a generic error', async () => {
+        const modelOverride = ref({
+            modelId: null,
+            providerId: null,
+        });
+        const openError = new Error('database unavailable');
+        settingsStoreMock.lastClosedSessionId = 23;
+        agentState.openSession.mockRejectedValueOnce(openError);
+
+        const mounted = await mountComposable(() =>
+            useSearchRequestFlow({
+                modelOverride,
+                clearDraft: vi.fn(),
+                getSupportedAttachments: () => [],
+                getUnsupportedAttachmentMessage: () => null,
+                getCurrentInputSnapshot: (query) =>
+                    createInputHistorySnapshot({
+                        text: query,
+                        attachments: [],
+                    }),
+            })
+        );
+
+        await expect(mounted.result.reopenLastClosedSession()).rejects.toThrow(openError);
+
+        expect(settingsStoreMock.updateLastClosedSessionId).not.toHaveBeenCalledWith(null);
+        expect(settingsStoreMock.lastClosedSessionId).toBe(23);
+
+        mounted.unmount();
+    });
+
+    it('clears the last closed session id when the stored session no longer exists', async () => {
+        const modelOverride = ref({
+            modelId: null,
+            providerId: null,
+        });
+        const openError = new Error('Session 23 not found');
+        settingsStoreMock.lastClosedSessionId = 23;
+        agentState.openSession.mockRejectedValueOnce(openError);
+
+        const mounted = await mountComposable(() =>
+            useSearchRequestFlow({
+                modelOverride,
+                clearDraft: vi.fn(),
+                getSupportedAttachments: () => [],
+                getUnsupportedAttachmentMessage: () => null,
+                getCurrentInputSnapshot: (query) =>
+                    createInputHistorySnapshot({
+                        text: query,
+                        attachments: [],
+                    }),
+            })
+        );
+
+        await expect(mounted.result.reopenLastClosedSession()).rejects.toThrow(openError);
+
+        expect(settingsStoreMock.updateLastClosedSessionId).toHaveBeenCalledWith(null);
+        expect(settingsStoreMock.lastClosedSessionId).toBeNull();
 
         mounted.unmount();
     });

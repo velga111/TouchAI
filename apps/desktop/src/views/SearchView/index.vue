@@ -817,6 +817,7 @@
 
     async function handleReopenLastClosedSession() {
         if (queryText.value.trim() || attachments.value.length > 0) {
+            await hideAllPopups();
             await controller.focusSearchInput();
             return;
         }
