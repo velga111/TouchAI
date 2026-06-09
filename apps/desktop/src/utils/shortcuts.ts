@@ -324,6 +324,18 @@ export function hasRequiredModifier(shortcut: string | null | undefined): boolea
     return modifiers.length > 0;
 }
 
+export function hasCommandModifier(shortcut: string | null | undefined): boolean {
+    const normalized = normalizeLocalShortcutString(shortcut);
+    if (!normalized) {
+        return false;
+    }
+
+    const { modifiers } = createShortcutParts(normalized);
+    return modifiers.some(
+        (modifier) => modifier === 'Mod' || modifier === 'Ctrl' || modifier === 'Alt'
+    );
+}
+
 export function isModifierlessFunctionShortcut(shortcut: string | null | undefined): boolean {
     const normalized = normalizeLocalShortcutString(shortcut);
     if (!normalized) {

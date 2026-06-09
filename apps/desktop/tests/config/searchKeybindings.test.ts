@@ -73,6 +73,7 @@ describe('search keybinding configuration', () => {
             normalizeSearchKeybindings({
                 'search.history.open': 'H',
                 'search.input.focus': 'Ctrl+L',
+                'search.model.toggle': 'Shift+M',
                 'search.window.maximize': 'F12',
             })
         ).toEqual({

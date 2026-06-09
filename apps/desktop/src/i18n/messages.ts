@@ -122,7 +122,8 @@ const zhCNMessages = {
     'settings.general.searchActionDescriptions.newLine': '在输入框中插入换行。',
     'settings.general.searchActionDescriptions.previousInputHistory': '查看上一条输入记录。',
     'settings.general.searchActionDescriptions.nextInputHistory': '查看下一条输入记录。',
-    'settings.general.searchShortcuts.errors.modifierRequired': '快捷键至少需要一个修饰键',
+    'settings.general.searchShortcuts.errors.modifierRequired':
+        '快捷键需要包含 Ctrl、Alt 或 Cmd，或使用允许的功能键',
     'settings.general.searchShortcuts.errors.reserved':
         '该快捷键保留给输入/导航行为，请选择其他组合',
     'settings.general.searchShortcuts.errors.duplicate': '该快捷键已被“{action}”使用，请换一个组合',
@@ -910,7 +911,7 @@ const enUSMessages: Record<keyof typeof zhCNMessages, string> = {
     'settings.general.searchActionDescriptions.nextInputHistory':
         'Show the next input history item.',
     'settings.general.searchShortcuts.errors.modifierRequired':
-        'A shortcut must include at least one modifier key',
+        'A shortcut must include Ctrl, Alt, or Cmd, or use an allowed function key',
     'settings.general.searchShortcuts.errors.reserved':
         'This shortcut is reserved for typing or navigation. Choose another combination.',
     'settings.general.searchShortcuts.errors.duplicate':

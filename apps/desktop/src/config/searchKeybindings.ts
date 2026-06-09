@@ -1,6 +1,6 @@
 import type { MessageKey } from '@/i18n';
 import {
-    hasRequiredModifier,
+    hasCommandModifier,
     isModifierlessFunctionShortcut,
     isReservedLocalShortcut,
     normalizeLocalShortcutString,
@@ -146,7 +146,7 @@ export function normalizeSearchKeybindings(value: unknown): SearchKeybindings {
             const allowsModifierlessFunction =
                 definition.allowModifierlessFunctionShortcut &&
                 isModifierlessFunctionShortcut(shortcut);
-            if (!hasRequiredModifier(shortcut) && !allowsModifierlessFunction) {
+            if (!hasCommandModifier(shortcut) && !allowsModifierlessFunction) {
                 continue;
             }
             if (isReservedLocalShortcut(shortcut)) {

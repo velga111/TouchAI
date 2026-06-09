@@ -381,6 +381,22 @@ describe('SettingsGeneralSection', () => {
         });
     });
 
+    it('does not save shift-only printable search shortcuts', async () => {
+        const wrapper = mount(GeneralSection);
+
+        await flushPromises();
+
+        const input = wrapper.get(
+            '[data-testid="settings-search-shortcut-input-search.history.open"]'
+        );
+        await input.trigger('focus');
+        await flushPromises();
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', shiftKey: true }));
+        await flushPromises();
+
+        expect(settingsStoreMock.updateSearchKeybindings).not.toHaveBeenCalled();
+    });
+
     it('shows fixed search shortcuts as unsupported for editing', async () => {
         const wrapper = mount(GeneralSection);
 

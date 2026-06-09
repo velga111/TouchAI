@@ -4,6 +4,7 @@ import {
     captureShortcutFromKeyboardEvent,
     findShortcutConflict,
     formatShortcutForDisplay,
+    hasCommandModifier,
     hasRequiredModifier,
     isModifierlessFunctionShortcut,
     isReservedLocalShortcut,
@@ -141,8 +142,14 @@ describe('shortcut utilities', () => {
         expect(isReservedLocalShortcut(null)).toBe(false);
 
         expect(hasRequiredModifier('Mod+K')).toBe(true);
+        expect(hasRequiredModifier('Shift+K')).toBe(true);
         expect(hasRequiredModifier('F11')).toBe(false);
         expect(hasRequiredModifier('')).toBe(false);
+
+        expect(hasCommandModifier('Mod+K')).toBe(true);
+        expect(hasCommandModifier('Alt+Shift+K')).toBe(true);
+        expect(hasCommandModifier('Shift+K')).toBe(false);
+        expect(hasCommandModifier('F11')).toBe(false);
 
         expect(isModifierlessFunctionShortcut('F1')).toBe(true);
         expect(isModifierlessFunctionShortcut('F12')).toBe(true);

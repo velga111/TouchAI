@@ -29,7 +29,7 @@
         captureShortcutFromKeyboardEvent,
         findShortcutConflict,
         formatShortcutForDisplay,
-        hasRequiredModifier,
+        hasCommandModifier,
         isModifierlessFunctionShortcut,
         isReservedLocalShortcut,
         normalizeLocalShortcutString,
@@ -517,7 +517,7 @@
                 definition.allowModifierlessFunctionShortcut &&
                 isModifierlessFunctionShortcut(normalizedShortcut);
 
-            if (!hasRequiredModifier(normalizedShortcut) && !allowsModifierlessFunctionShortcut) {
+            if (!hasCommandModifier(normalizedShortcut) && !allowsModifierlessFunctionShortcut) {
                 reportSearchShortcutError(
                     actionId,
                     'settings.general.searchShortcuts.errors.modifierRequired'
