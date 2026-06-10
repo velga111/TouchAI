@@ -1,11 +1,14 @@
 import type { AppIconName } from '@components/appIconMap';
 
 import { type MessageKey, t } from '@/i18n';
+import { JSON_SETTINGS_SECTIONS } from '@/stores/setting/sections/registry';
 
 export type NavigationSection =
     | 'general'
     | 'ai-services'
     | 'built-in-tools'
+    | 'search'
+    | 'browser'
     | 'mcp-tools'
     | 'data-management';
 
@@ -32,6 +35,17 @@ interface SettingsNavigationGroupDefinition {
     labelKey: MessageKey;
     items: SettingsNavigationItemDefinition[];
 }
+
+const jsonSettingsNavigationDefinitions: SettingsNavigationItemDefinition[] = [
+    ...JSON_SETTINGS_SECTIONS,
+]
+    .sort((left, right) => left.ui.navigationOrder - right.ui.navigationOrder)
+    .map((section) => ({
+        id: section.ui.sectionId,
+        icon: section.ui.icon,
+        labelKey: section.ui.labelKey,
+        descriptionKey: section.ui.descriptionKey,
+    }));
 
 const settingsNavigationDefinitions: SettingsNavigationGroupDefinition[] = [
     {
@@ -60,6 +74,7 @@ const settingsNavigationDefinitions: SettingsNavigationGroupDefinition[] = [
                 labelKey: 'settings.nav.builtInTools.label',
                 descriptionKey: 'settings.nav.builtInTools.description',
             },
+            ...jsonSettingsNavigationDefinitions,
             {
                 id: 'mcp-tools',
                 icon: 'mcp',
