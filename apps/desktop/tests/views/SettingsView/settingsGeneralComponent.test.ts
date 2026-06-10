@@ -322,6 +322,28 @@ describe('SettingsGeneralSection', () => {
         );
     });
 
+    it('captures Ctrl+Space from the global shortcut input before the preset menu handles Space', async () => {
+        const wrapper = mount(GeneralSection);
+
+        await flushPromises();
+
+        const input = wrapper.get('[data-testid="settings-global-shortcut-input"]');
+        await input.trigger('focus');
+        await flushPromises();
+
+        await input.trigger('keydown', {
+            key: ' ',
+            code: 'Space',
+            ctrlKey: true,
+        });
+        await flushPromises();
+
+        expect(nativeMock.shortcut.registerGlobalShortcut).toHaveBeenCalledWith('Ctrl+Space');
+        expect(settingsStoreMock.updateGlobalShortcut).toHaveBeenCalledWith('Ctrl+Space');
+        expect((input.element as HTMLInputElement).value).toBe('Ctrl+Space');
+        expect(settingsStoreMock.settings.value.globalShortcut).toBe('Ctrl+Space');
+    });
+
     it('does not capture navigation keys while global shortcut presets are open', async () => {
         const wrapper = mount(GeneralSection);
 

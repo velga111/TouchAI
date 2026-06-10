@@ -284,9 +284,9 @@
 
     watch(isCapturing, (newValue) => {
         if (newValue) {
-            window.addEventListener('keydown', captureShortcut);
+            window.addEventListener('keydown', captureShortcut, { capture: true });
         } else {
-            window.removeEventListener('keydown', captureShortcut);
+            window.removeEventListener('keydown', captureShortcut, { capture: true });
         }
     });
 
@@ -476,7 +476,7 @@
     });
 
     onUnmounted(() => {
-        window.removeEventListener('keydown', captureShortcut);
+        window.removeEventListener('keydown', captureShortcut, { capture: true });
     });
 </script>
 
@@ -552,6 +552,7 @@
                                                         t('settings.general.shortcutPlaceholder')
                                                     "
                                                     @pointerdown.stop
+                                                    @keydown.capture="captureShortcut"
                                                     @click.stop
                                                     @focus="startCapture"
                                                 />
