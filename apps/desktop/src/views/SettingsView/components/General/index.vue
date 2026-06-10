@@ -330,7 +330,7 @@
                       notificationBodyKey: MessageKey;
                       params?: never;
                   } => {
-                if (errorStr.includes('already registered') || errorStr.includes('宸叉敞鍐?')) {
+                if (errorStr.includes('already registered') || errorStr.includes('已注册')) {
                     return {
                         friendlyMessageKey:
                             'notification.shortcutRegistrationFailed.alreadyRegistered',
@@ -340,7 +340,7 @@
                     };
                 }
 
-                if (errorStr.includes('invalid') || errorStr.includes('鏃犳晥')) {
+                if (errorStr.includes('invalid') || errorStr.includes('无效')) {
                     return {
                         friendlyMessageKey: 'notification.shortcutRegistrationFailed.invalid',
                         notificationBodyKey: 'notification.shortcutRegistrationFailed.invalidBody',

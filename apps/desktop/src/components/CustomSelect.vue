@@ -9,8 +9,7 @@
         SelectValue,
     } from '@components/ui/select';
     import type { AcceptableValue, SelectTriggerProps } from 'reka-ui';
-    import { computed, ref } from 'vue';
-    import { useAttrs } from 'vue';
+    import { computed, ref, useAttrs } from 'vue';
 
     import { type MessageKey, t, tt } from '@/i18n';
 

@@ -567,9 +567,7 @@
                                 :data-testid="`settings-search-shortcut-action-${row.id}`"
                                 :data-shortcut-action="row.shortcutAction"
                                 @mousedown.prevent
-                                @click="
-                                    handleSearchShortcutIconAction(row.id, row.shortcutAction)
-                                "
+                                @click="handleSearchShortcutIconAction(row.id, row.shortcutAction)"
                             >
                                 <AppIcon
                                     :name="row.shortcutAction === 'clear' ? 'x' : 'undo'"

@@ -77,7 +77,7 @@ export const useSettingsStore = defineStore('settings', () => {
                 );
             });
 
-            await Promise.allSettled(
+            const persistenceResults = await Promise.allSettled(
                 GENERAL_SETTING_DEFINITIONS.map((definition, index) => {
                     const persistedValue = settingRows[index] ?? null;
                     if (definition.shouldRewritePersisted?.(persistedValue)) {
@@ -90,6 +90,18 @@ export const useSettingsStore = defineStore('settings', () => {
                     return persistDefaultIfMissing(definition.key, persistedValue);
                 })
             );
+            const failedPersistenceKeys = persistenceResults.flatMap((result, index) =>
+                result.status === 'rejected'
+                    ? [GENERAL_SETTING_DEFINITIONS[index]?.key ?? `unknown:${index}`]
+                    : []
+            );
+            if (failedPersistenceKeys.length > 0) {
+                throw new Error(
+                    `Failed to persist general setting rewrite/default value(s): ${failedPersistenceKeys.join(
+                        ', '
+                    )}`
+                );
+            }
         } finally {
             loading.value = false;
         }
