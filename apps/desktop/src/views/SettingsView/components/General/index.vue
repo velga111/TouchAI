@@ -8,11 +8,6 @@
     import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
     import {
-        getSearchKeybindingDefinition,
-        SEARCH_KEYBINDING_DEFINITIONS,
-        type SearchKeybindingActionId,
-    } from '@/config/searchKeybindings';
-    import {
         resolveSearchWindowDefaultSize,
         type SearchWindowSizePreset,
     } from '@/config/searchWindow';
@@ -25,17 +20,9 @@
         t,
     } from '@/i18n';
     import { type OutputScrollBehavior, useSettingsStore } from '@/stores/settings';
-    import {
-        captureShortcutFromKeyboardEvent,
-        findShortcutConflict,
-        formatShortcutForDisplay,
-        hasCommandModifier,
-        isModifierlessFunctionShortcut,
-        isReservedLocalShortcut,
-        normalizeLocalShortcutString,
-        toCurrentPlatformShortcut,
-    } from '@/utils/shortcuts';
+    import { normalizeLocalShortcutString } from '@/utils/shortcuts';
 
+    import SearchShortcutSettings from './SearchShortcutSettings.vue';
     import { resolveShortcutCaptureCompletion } from './shortcutCapture';
     import UpdateSettingsSection from './UpdateSettingsSection.vue';
 
@@ -45,7 +32,6 @@
 
     const settingsStore = useSettingsStore();
     const { settings } = storeToRefs(settingsStore);
-    type SearchShortcutIconAction = 'clear' | 'restore';
 
     const outputScrollBehaviorOptions = computed(
         (): Array<{
@@ -90,144 +76,6 @@
         label: LOCALE_LABELS[value],
     }));
 
-    type SearchShortcutGroupId = 'session' | 'inputAndRequest' | 'window';
-
-    interface SettingsSearchShortcutGroupRow {
-        kind: 'configurable' | 'fixed';
-        id: string;
-        label: string;
-        description?: string;
-        displayValue: string;
-        isCapturing?: boolean;
-        hasError?: boolean;
-        shortcutAction?: SearchShortcutIconAction;
-        shortcutActionLabel?: string;
-    }
-
-    const fixedSearchShortcutRows = computed<
-        Record<SearchShortcutGroupId, SettingsSearchShortcutGroupRow[]>
-    >(() => ({
-        session: [
-            {
-                kind: 'fixed',
-                id: 'search.inputHistory.older',
-                label: t('settings.general.fixedSearchActions.previousInputHistory'),
-                description: t('settings.general.searchActionDescriptions.previousInputHistory'),
-                displayValue: 'Up',
-            },
-            {
-                kind: 'fixed',
-                id: 'search.inputHistory.newer',
-                label: t('settings.general.fixedSearchActions.nextInputHistory'),
-                description: t('settings.general.searchActionDescriptions.nextInputHistory'),
-                displayValue: 'Down',
-            },
-        ],
-        inputAndRequest: [
-            {
-                kind: 'fixed',
-                id: 'search.request.cancel',
-                label: t('settings.general.searchActions.cancelRequest'),
-                description: t('settings.general.searchActionDescriptions.cancelRequest'),
-                displayValue: 'Esc',
-            },
-            {
-                kind: 'fixed',
-                id: 'search.submit',
-                label: t('settings.general.fixedSearchActions.submitRequest'),
-                description: t('settings.general.searchActionDescriptions.submitRequest'),
-                displayValue: 'Enter',
-            },
-            {
-                kind: 'fixed',
-                id: 'search.newLine',
-                label: t('settings.general.fixedSearchActions.newLine'),
-                description: t('settings.general.searchActionDescriptions.newLine'),
-                displayValue: 'Shift+Enter',
-            },
-        ],
-        window: [],
-    }));
-
-    function formatSearchShortcutForSettings(shortcut: string | null | undefined): string {
-        const normalizedShortcut = normalizeLocalShortcutString(shortcut);
-        return normalizedShortcut
-            ? formatShortcutForDisplay(normalizedShortcut)
-            : t('settings.general.noShortcut');
-    }
-
-    const searchShortcutRows = computed<SettingsSearchShortcutGroupRow[]>(() =>
-        SEARCH_KEYBINDING_DEFINITIONS.map((definition) => {
-            const currentShortcut = settings.value.searchKeybindings[definition.id];
-            const isDefaultShortcut =
-                normalizeLocalShortcutString(currentShortcut) ===
-                normalizeLocalShortcutString(definition.defaultShortcut);
-            const shortcutAction: SearchShortcutIconAction = isDefaultShortcut
-                ? 'clear'
-                : 'restore';
-
-            return {
-                ...definition,
-                kind: 'configurable',
-                label: t(definition.labelKey),
-                description: t(definition.descriptionKey),
-                displayValue: searchShortcutDisplayMap.value[definition.id],
-                isCapturing: activeSearchShortcutActionId.value === definition.id,
-                hasError: searchShortcutErrorActionId.value === definition.id,
-                shortcutAction,
-                shortcutActionLabel:
-                    shortcutAction === 'clear'
-                        ? t('common.clear')
-                        : `${t('window.restore')} ${t('common.default')}`,
-            };
-        })
-    );
-
-    const searchShortcutGroups = computed(() => {
-        const rowById = new Map<string, SettingsSearchShortcutGroupRow>(
-            searchShortcutRows.value.map((row) => [row.id, row] as const)
-        );
-        const groups: Array<{
-            id: SearchShortcutGroupId;
-            title: string;
-            actionIds: SearchKeybindingActionId[];
-        }> = [
-            {
-                id: 'session',
-                title: t('settings.general.searchShortcutGroups.session'),
-                actionIds: [
-                    'search.history.open',
-                    'search.session.new',
-                    'search.session.reopenLastClosed',
-                ],
-            },
-            {
-                id: 'inputAndRequest',
-                title: t('settings.general.searchShortcutGroups.inputAndRequest'),
-                actionIds: ['search.input.focus', 'search.model.toggle'],
-            },
-            {
-                id: 'window',
-                title: t('settings.general.searchShortcutGroups.window'),
-                actionIds: ['search.window.pin', 'search.window.maximize', 'search.settings.open'],
-            },
-        ];
-
-        return groups.map((group) => {
-            const rows: SettingsSearchShortcutGroupRow[] = [
-                ...group.actionIds
-                    .map((actionId) => rowById.get(actionId))
-                    .filter((row): row is SettingsSearchShortcutGroupRow => Boolean(row)),
-                ...fixedSearchShortcutRows.value[group.id],
-            ];
-
-            return {
-                title: group.title,
-                rows,
-            };
-        });
-    });
-
     const isSaving = ref(false);
     const isCapturing = ref(false);
     const hasCapturedShortcut = ref(false);
@@ -244,70 +92,19 @@
             value: shortcut,
         }))
     );
-    const activeSearchShortcutActionId = ref<SearchKeybindingActionId | null>(null);
-    const searchShortcutCapturedValue = ref<string | null>(null);
-    const hasCapturedSearchShortcut = ref(false);
-    const searchShortcutErrorActionId = ref<SearchKeybindingActionId | null>(null);
-    const searchShortcutDisplayMap = ref<Record<SearchKeybindingActionId, string>>(
-        SEARCH_KEYBINDING_DEFINITIONS.reduce(
-            (accumulator, definition) => {
-                accumulator[definition.id] = formatSearchShortcutForSettings(
-                    settings.value.searchKeybindings[definition.id]
-                );
-                return accumulator;
-            },
-            {} as Record<SearchKeybindingActionId, string>
-        )
-    );
 
-    function updateSearchShortcutDisplay(actionId: SearchKeybindingActionId, value: string) {
-        searchShortcutDisplayMap.value = {
-            ...searchShortcutDisplayMap.value,
-            [actionId]: value,
-        };
-    }
-
-    function syncSearchShortcutDisplays() {
-        const next = { ...searchShortcutDisplayMap.value };
-        for (const definition of SEARCH_KEYBINDING_DEFINITIONS) {
-            if (activeSearchShortcutActionId.value === definition.id) {
-                continue;
-            }
-            next[definition.id] = formatSearchShortcutForSettings(
-                settings.value.searchKeybindings[definition.id]
-            );
-        }
-        searchShortcutDisplayMap.value = next;
-    }
-
-    function reportSearchShortcutError(
-        actionId: SearchKeybindingActionId,
-        messageKey: MessageKey,
-        params?: MessageParams
-    ) {
-        searchShortcutErrorActionId.value = actionId;
-        alertMessage.value?.error(t(messageKey, params), 3000);
-    }
-
-    function findGlobalShortcutSearchConflict(shortcut: string) {
+    function findGlobalShortcutSearchConflict(shortcut: string): boolean {
         const normalizedShortcut = normalizeLocalShortcutString(shortcut);
         if (!normalizedShortcut) {
-            return null;
+            return false;
         }
 
-        for (const definition of SEARCH_KEYBINDING_DEFINITIONS) {
-            const searchShortcut = normalizeLocalShortcutString(
-                toCurrentPlatformShortcut(settings.value.searchKeybindings[definition.id])
-            );
-            if (searchShortcut && searchShortcut === normalizedShortcut) {
-                return definition;
-            }
-        }
-
-        return null;
+        return Object.values(settings.value.searchKeybindings).some((searchShortcut) => {
+            const normalizedSearchShortcut = normalizeLocalShortcutString(searchShortcut);
+            return normalizedSearchShortcut === normalizedShortcut;
+        });
     }
 
-    // 键名映射表
     const keyNameMap: Record<string, string> = {
         Control: 'Ctrl',
         ' ': 'Space',
@@ -319,42 +116,42 @@
         Delete: 'Del',
     };
 
-    // 捕获快捷键
     const captureShortcut = (event: KeyboardEvent) => {
-        if (!isCapturing.value) return;
+        if (!isCapturing.value) {
+            return;
+        }
 
         event.preventDefault();
         event.stopPropagation();
 
-        // 忽略单独的修饰键和 Win 键
         if (['Control', 'Alt', 'Shift', 'Meta', 'OS'].includes(event.key)) {
             return;
         }
 
-        // 不支持 Win 键组合
         if (event.metaKey) {
             alertMessage.value?.warning(t('settings.general.winKeyUnsupported'), 3000);
             return;
         }
 
         const modifiers: string[] = [];
-        if (event.ctrlKey) modifiers.push('Ctrl');
-        if (event.altKey) modifiers.push('Alt');
-        if (event.shiftKey) modifiers.push('Shift');
+        if (event.ctrlKey) {
+            modifiers.push('Ctrl');
+        }
+        if (event.altKey) {
+            modifiers.push('Alt');
+        }
+        if (event.shiftKey) {
+            modifiers.push('Shift');
+        }
 
-        // 获取按键名称
-        let keyName: string = event.key;
-
-        // 使用映射表转换键名
+        let keyName = event.key;
         const mappedKey = keyNameMap[keyName];
         if (mappedKey) {
             keyName = mappedKey;
         } else if (keyName.length === 1) {
-            // 单字符键转为大写
             keyName = keyName.toUpperCase();
         }
 
-        // 组合快捷键字符串
         const shortcut = [...modifiers, keyName].join('+');
         displayShortcut.value = shortcut;
         hasCapturedShortcut.value = true;
@@ -362,7 +159,6 @@
         void confirmCapturedShortcut(shortcut);
     };
 
-    // 开始捕获（输入框获得焦点）
     const startCapture = () => {
         isCapturing.value = true;
         hasCapturedShortcut.value = false;
@@ -371,7 +167,9 @@
     };
 
     const confirmCapturedShortcut = async (shortcut: string) => {
-        if (!isCapturing.value) return;
+        if (!isCapturing.value) {
+            return;
+        }
 
         isCapturing.value = false;
         showGlobalShortcutPresetMenu.value = false;
@@ -384,9 +182,10 @@
         await saveNewShortcut(shortcut);
     };
 
-    // 停止捕获并保存（输入框失去焦点）
     const stopCaptureAndSave = async () => {
-        if (!isCapturing.value) return;
+        if (!isCapturing.value) {
+            return;
+        }
 
         isCapturing.value = false;
         showGlobalShortcutPresetMenu.value = false;
@@ -402,11 +201,9 @@
             return;
         }
 
-        // 保存新快捷键
         await saveNewShortcut(completion.shortcut);
     };
 
-    // 保存新快捷键的通用函数
     const handleGlobalShortcutPresetOpenChange = (open: boolean) => {
         if (isSaving.value) {
             return;
@@ -421,14 +218,11 @@
     };
 
     const saveNewShortcut = async (newShortcut: string) => {
-        const searchConflict = findGlobalShortcutSearchConflict(newShortcut);
-        if (searchConflict) {
+        if (findGlobalShortcutSearchConflict(newShortcut)) {
             shortcutRegistrationFailed.value = false;
             displayShortcut.value = settings.value.globalShortcut;
             alertMessage.value?.error(
-                t('settings.general.searchShortcuts.errors.duplicate', {
-                    action: t(searchConflict.labelKey),
-                }),
+                t('settings.general.searchShortcuts.errors.globalConflict'),
                 3000
             );
             return;
@@ -438,7 +232,6 @@
         shortcutRegistrationFailed.value = false;
 
         try {
-            // 先注册到 Rust 端
             const registered = await registerShortcut(newShortcut);
             if (!registered) {
                 shortcutRegistrationFailed.value = true;
@@ -446,17 +239,13 @@
                 return;
             }
 
-            // 注册成功后保存到数据库
             await saveShortcutToDatabase(newShortcut);
-
-            // 更新本地状态
             settings.value.globalShortcut = newShortcut;
             displayShortcut.value = newShortcut;
             alertMessage.value?.success(t('settings.general.shortcutSaved'), 3000);
         } catch (error) {
             console.error('Failed to save shortcut:', error);
             alertMessage.value?.error(t('settings.general.saveShortcutFailed'), 3000);
-            // 恢复原值
             displayShortcut.value = settings.value.globalShortcut;
             shortcutRegistrationFailed.value = false;
         } finally {
@@ -464,308 +253,24 @@
         }
     };
 
-    // 使用建议的快捷键
     const useSuggestedShortcut = async (shortcut: string) => {
         if (isSaving.value) {
             return;
         }
 
         showGlobalShortcutPresetMenu.value = false;
-
-        // 如果正在捕获，先取消捕获
         if (isCapturing.value) {
             isCapturing.value = false;
         }
 
-        // 如果输入框有焦点，先失焦
         await saveNewShortcut(shortcut);
     };
 
-    const captureSearchShortcut = (event: KeyboardEvent) => {
-        const actionId = activeSearchShortcutActionId.value;
-        if (!actionId) {
-            return;
-        }
-
-        event.preventDefault();
-        event.stopPropagation();
-
-        const captured = captureShortcutFromKeyboardEvent(event);
-        if (!captured) {
-            if (event.metaKey) {
-                alertMessage.value?.warning(t('settings.general.winKeyUnsupported'), 3000);
-            }
-            return;
-        }
-
-        searchShortcutCapturedValue.value = captured.shortcut;
-        hasCapturedSearchShortcut.value = true;
-        searchShortcutErrorActionId.value = null;
-        updateSearchShortcutDisplay(actionId, captured.displayShortcut);
-        void confirmCapturedSearchShortcut(actionId, captured.shortcut);
-    };
-
-    const saveSearchShortcut = async (
-        actionId: SearchKeybindingActionId,
-        shortcut: string | null
-    ): Promise<boolean> => {
-        const normalizedShortcut =
-            shortcut === null ? null : normalizeLocalShortcutString(shortcut);
-        if (normalizedShortcut) {
-            const definition = getSearchKeybindingDefinition(actionId);
-            const allowsModifierlessFunctionShortcut =
-                definition.allowModifierlessFunctionShortcut &&
-                isModifierlessFunctionShortcut(normalizedShortcut);
-
-            if (!hasCommandModifier(normalizedShortcut) && !allowsModifierlessFunctionShortcut) {
-                reportSearchShortcutError(
-                    actionId,
-                    'settings.general.searchShortcuts.errors.modifierRequired'
-                );
-                updateSearchShortcutDisplay(
-                    actionId,
-                    formatSearchShortcutForSettings(settings.value.searchKeybindings[actionId])
-                );
-                return false;
-            }
-
-            if (isReservedLocalShortcut(normalizedShortcut)) {
-                reportSearchShortcutError(
-                    actionId,
-                    'settings.general.searchShortcuts.errors.reserved'
-                );
-                updateSearchShortcutDisplay(
-                    actionId,
-                    formatSearchShortcutForSettings(settings.value.searchKeybindings[actionId])
-                );
-                return false;
-            }
-
-            const conflictActionId = findShortcutConflict(
-                normalizedShortcut,
-                SEARCH_KEYBINDING_DEFINITIONS.map((definition) => ({
-                    id: definition.id,
-                    shortcut: settings.value.searchKeybindings[definition.id],
-                })),
-                actionId
-            );
-            if (conflictActionId) {
-                reportSearchShortcutError(
-                    actionId,
-                    'settings.general.searchShortcuts.errors.duplicate',
-                    {
-                        action: t(getSearchKeybindingDefinition(conflictActionId).labelKey),
-                    }
-                );
-                updateSearchShortcutDisplay(
-                    actionId,
-                    formatSearchShortcutForSettings(settings.value.searchKeybindings[actionId])
-                );
-                return false;
-            }
-
-            const comparableGlobalShortcut = normalizeLocalShortcutString(
-                settings.value.globalShortcut
-            );
-            const comparableLocalShortcut = normalizeLocalShortcutString(
-                toCurrentPlatformShortcut(normalizedShortcut)
-            );
-            if (
-                comparableGlobalShortcut &&
-                comparableLocalShortcut &&
-                comparableGlobalShortcut === comparableLocalShortcut
-            ) {
-                reportSearchShortcutError(
-                    actionId,
-                    'settings.general.searchShortcuts.errors.globalConflict'
-                );
-                updateSearchShortcutDisplay(
-                    actionId,
-                    formatSearchShortcutForSettings(settings.value.searchKeybindings[actionId])
-                );
-                return false;
-            }
-        }
-
-        isSaving.value = true;
-        searchShortcutErrorActionId.value = null;
-        try {
-            await settingsStore.updateSearchKeybindings({
-                ...settings.value.searchKeybindings,
-                [actionId]: normalizedShortcut,
-            });
-            updateSearchShortcutDisplay(
-                actionId,
-                formatSearchShortcutForSettings(normalizedShortcut)
-            );
-            alertMessage.value?.success(t('common.saved'), 2000);
-            return true;
-        } catch (error) {
-            console.error('Failed to save search shortcut:', error);
-            reportSearchShortcutError(actionId, 'settings.general.saveSettingsFailed');
-            updateSearchShortcutDisplay(
-                actionId,
-                formatSearchShortcutForSettings(settings.value.searchKeybindings[actionId])
-            );
-            return false;
-        } finally {
-            isSaving.value = false;
-        }
-    };
-
-    const startSearchShortcutCapture = (rowOrActionId: SettingsSearchShortcutGroupRow | string) => {
-        if (typeof rowOrActionId === 'string') {
-            const actionId = rowOrActionId as SearchKeybindingActionId;
-            activeSearchShortcutActionId.value = actionId;
-            hasCapturedSearchShortcut.value = false;
-            searchShortcutCapturedValue.value = null;
-            searchShortcutErrorActionId.value = null;
-            updateSearchShortcutDisplay(actionId, shortcutCapturePrompt.value);
-            return;
-        }
-
-        if (rowOrActionId.kind !== 'configurable') {
-            return;
-        }
-
-        const actionId = rowOrActionId.id as SearchKeybindingActionId;
-        activeSearchShortcutActionId.value = actionId;
-        hasCapturedSearchShortcut.value = false;
-        searchShortcutCapturedValue.value = null;
-        searchShortcutErrorActionId.value = null;
-        updateSearchShortcutDisplay(actionId, shortcutCapturePrompt.value);
-    };
-
-    const confirmCapturedSearchShortcut = async (
-        actionId: SearchKeybindingActionId,
-        shortcut: string
-    ) => {
-        if (activeSearchShortcutActionId.value !== actionId) {
-            return;
-        }
-
-        hasCapturedSearchShortcut.value = false;
-        searchShortcutCapturedValue.value = null;
-
-        if (
-            normalizeLocalShortcutString(shortcut) ===
-            normalizeLocalShortcutString(settings.value.searchKeybindings[actionId])
-        ) {
-            updateSearchShortcutDisplay(
-                actionId,
-                formatSearchShortcutForSettings(settings.value.searchKeybindings[actionId])
-            );
-            activeSearchShortcutActionId.value = null;
-            return;
-        }
-
-        const saved = await saveSearchShortcut(actionId, shortcut);
-        if (saved) {
-            activeSearchShortcutActionId.value = null;
-        }
-    };
-
-    const stopSearchShortcutCaptureAndSave = async (
-        rowOrActionId: SettingsSearchShortcutGroupRow | string
-    ) => {
-        const actionId =
-            typeof rowOrActionId === 'string'
-                ? (rowOrActionId as SearchKeybindingActionId)
-                : rowOrActionId.kind === 'configurable'
-                  ? (rowOrActionId.id as SearchKeybindingActionId)
-                  : null;
-        if (!actionId) {
-            return;
-        }
-
-        if (activeSearchShortcutActionId.value !== actionId) {
-            return;
-        }
-
-        activeSearchShortcutActionId.value = null;
-
-        if (!hasCapturedSearchShortcut.value || !searchShortcutCapturedValue.value) {
-            updateSearchShortcutDisplay(
-                actionId,
-                formatSearchShortcutForSettings(settings.value.searchKeybindings[actionId])
-            );
-            return;
-        }
-
-        if (
-            normalizeLocalShortcutString(searchShortcutCapturedValue.value) ===
-            normalizeLocalShortcutString(settings.value.searchKeybindings[actionId])
-        ) {
-            updateSearchShortcutDisplay(
-                actionId,
-                formatSearchShortcutForSettings(settings.value.searchKeybindings[actionId])
-            );
-            return;
-        }
-
-        await saveSearchShortcut(actionId, searchShortcutCapturedValue.value);
-    };
-
-    const resetSearchShortcut = async (actionId: SearchKeybindingActionId) => {
-        await saveSearchShortcut(actionId, getSearchKeybindingDefinition(actionId).defaultShortcut);
-    };
-
-    const disableSearchShortcut = async (actionId: SearchKeybindingActionId) => {
-        await saveSearchShortcut(actionId, null);
-    };
-
-    const handleSearchShortcutIconAction = async (
-        rowOrActionId: SettingsSearchShortcutGroupRow | string,
-        explicitAction?: SearchShortcutIconAction
-    ) => {
-        const actionId =
-            typeof rowOrActionId === 'string'
-                ? (rowOrActionId as SearchKeybindingActionId)
-                : rowOrActionId.kind === 'configurable'
-                  ? (rowOrActionId.id as SearchKeybindingActionId)
-                  : null;
-        const action =
-            explicitAction ??
-            (typeof rowOrActionId === 'string'
-                ? undefined
-                : rowOrActionId.kind === 'configurable'
-                  ? rowOrActionId.shortcutAction
-                  : undefined);
-        if (!actionId || !action) {
-            return;
-        }
-
-        if (activeSearchShortcutActionId.value === actionId) {
-            activeSearchShortcutActionId.value = null;
-            hasCapturedSearchShortcut.value = false;
-            searchShortcutCapturedValue.value = null;
-            updateSearchShortcutDisplay(
-                actionId,
-                formatSearchShortcutForSettings(settings.value.searchKeybindings[actionId])
-            );
-        }
-
-        if (action === 'clear') {
-            await disableSearchShortcut(actionId);
-            return;
-        }
-
-        await resetSearchShortcut(actionId);
-    };
-
-    // 监听 isCapturing 状态，添加/移除全局键盘监听
     watch(isCapturing, (newValue) => {
         if (newValue) {
             window.addEventListener('keydown', captureShortcut);
         } else {
             window.removeEventListener('keydown', captureShortcut);
-        }
-    });
-
-    watch(activeSearchShortcutActionId, (actionId) => {
-        window.removeEventListener('keydown', captureSearchShortcut);
-        if (actionId) {
-            window.addEventListener('keydown', captureSearchShortcut);
         }
     });
 
@@ -779,14 +284,6 @@
     );
 
     watch(
-        () => settings.value.searchKeybindings,
-        () => {
-            syncSearchShortcutDisplays();
-        },
-        { deep: true, immediate: true }
-    );
-
-    watch(
         () => settings.value.language,
         (language) => {
             pendingLanguage.value = language;
@@ -794,13 +291,11 @@
         { immediate: true }
     );
 
-    // 从 store 加载设置
     const loadSettings = async () => {
         try {
             await settingsStore.initialize();
             displayShortcut.value = settings.value.globalShortcut;
 
-            // 检查快捷键注册状态
             const [failed, error] = await native.shortcut.getShortcutStatus();
             if (failed) {
                 shortcutRegistrationFailed.value = true;
@@ -812,7 +307,6 @@
         }
     };
 
-    // 注册快捷键到 Rust 端
     const registerShortcut = async (shortcut: string): Promise<boolean> => {
         try {
             await native.shortcut.registerGlobalShortcut(shortcut);
@@ -836,7 +330,7 @@
                       notificationBodyKey: MessageKey;
                       params?: never;
                   } => {
-                if (errorStr.includes('already registered') || errorStr.includes('已注册')) {
+                if (errorStr.includes('already registered') || errorStr.includes('宸叉敞鍐?')) {
                     return {
                         friendlyMessageKey:
                             'notification.shortcutRegistrationFailed.alreadyRegistered',
@@ -846,7 +340,7 @@
                     };
                 }
 
-                if (errorStr.includes('invalid') || errorStr.includes('无效')) {
+                if (errorStr.includes('invalid') || errorStr.includes('鏃犳晥')) {
                     return {
                         friendlyMessageKey: 'notification.shortcutRegistrationFailed.invalid',
                         notificationBodyKey: 'notification.shortcutRegistrationFailed.invalidBody',
@@ -869,7 +363,6 @@
                 };
             })();
 
-            // 发送系统通知
             notify({
                 title: t('notification.shortcutRegistrationFailed.title'),
                 body: t(shortcutErrorMessage.notificationBodyKey, shortcutErrorMessage.params),
@@ -883,7 +376,6 @@
         }
     };
 
-    // 保存快捷键到数据库并注册
     const saveShortcutToDatabase = async (shortcut: string) => {
         try {
             await settingsStore.updateGlobalShortcut(shortcut);
@@ -956,7 +448,6 @@
     onMounted(async () => {
         await loadSettings();
 
-        // 同步开机自启动状态
         try {
             const isEnabled = await native.autostart.isAutostartEnabled();
             if (isEnabled !== settings.value.startOnBoot) {
@@ -968,10 +459,8 @@
         }
     });
 
-    // 组件卸载时清理事件监听
     onUnmounted(() => {
         window.removeEventListener('keydown', captureShortcut);
-        window.removeEventListener('keydown', captureSearchShortcut);
     });
 </script>
 
@@ -1072,95 +561,7 @@
                     </div>
                 </div>
 
-                <div v-for="group in searchShortcutGroups" :key="group.title" class="space-y-2">
-                    <div class="px-1 text-[12px] leading-5 font-medium text-neutral-500">
-                        {{ group.title }}
-                    </div>
-                    <div class="settings-row-group divide-y divide-neutral-200/70">
-                        <div
-                            v-for="row in group.rows"
-                            :key="row.id"
-                            class="grid min-w-0 gap-4 px-5 py-4 sm:grid-cols-[minmax(0,1fr)_220px] sm:items-center"
-                        >
-                            <div
-                                data-testid="settings-general-row-label"
-                                class="min-w-0 text-[13px] leading-6 font-normal text-neutral-900"
-                            >
-                                <div>{{ row.label }}</div>
-                                <div
-                                    v-if="row.description"
-                                    class="text-[12px] leading-5 text-neutral-500"
-                                >
-                                    {{ row.description }}
-                                </div>
-                            </div>
-                            <div class="min-w-0 justify-self-end">
-                                <div class="flex min-w-0 items-center justify-end">
-                                    <div class="relative w-[220px] shrink-0">
-                                        <input
-                                            :value="row.displayValue"
-                                            :data-testid="`settings-search-shortcut-input-${row.id}`"
-                                            type="text"
-                                            readonly
-                                            :class="[
-                                                'w-full rounded-[10px] border px-9 py-2 text-center text-[12px] shadow-none [box-shadow:none] transition-colors focus:shadow-none focus:[box-shadow:none] focus:outline-none',
-                                                row.hasError
-                                                    ? 'border-red-300 bg-red-50 text-red-600'
-                                                    : row.isCapturing
-                                                      ? 'border-primary-300 bg-white text-neutral-950'
-                                                      : 'focus:border-primary-300 border-transparent bg-[#f0f0ef] text-neutral-900 hover:bg-[#ececea]',
-                                                isSaving
-                                                    ? 'cursor-wait opacity-50'
-                                                    : row.shortcutAction
-                                                      ? 'cursor-pointer'
-                                                      : 'cursor-default',
-                                            ]"
-                                            :disabled="isSaving"
-                                            :placeholder="t('settings.general.shortcutPlaceholder')"
-                                            :title="
-                                                row.kind === 'fixed'
-                                                    ? t(
-                                                          'settings.general.searchShortcuts.fixedUnavailable'
-                                                      )
-                                                    : undefined
-                                            "
-                                            :tabindex="row.kind === 'fixed' ? -1 : 0"
-                                            @mousedown="
-                                                row.kind === 'fixed' && $event.preventDefault()
-                                            "
-                                            @focus="startSearchShortcutCapture(row)"
-                                            @blur="stopSearchShortcutCaptureAndSave(row)"
-                                        />
-                                        <button
-                                            v-if="row.shortcutAction"
-                                            type="button"
-                                            class="absolute top-1/2 right-2.5 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-neutral-200/70 hover:text-neutral-900 disabled:cursor-not-allowed disabled:opacity-50"
-                                            :disabled="isSaving"
-                                            :title="row.shortcutActionLabel"
-                                            :aria-label="row.shortcutActionLabel"
-                                            :data-testid="`settings-search-shortcut-action-${row.id}`"
-                                            :data-shortcut-action="row.shortcutAction"
-                                            @mousedown.prevent
-                                            @click="
-                                                handleSearchShortcutIconAction(
-                                                    row.id,
-                                                    row.shortcutAction
-                                                )
-                                            "
-                                        >
-                                            <AppIcon
-                                                :name="
-                                                    row.shortcutAction === 'clear' ? 'x' : 'undo'
-                                                "
-                                                class="h-4 w-4"
-                                            />
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <SearchShortcutSettings />
             </section>
 
             <section class="space-y-4">
