@@ -511,7 +511,7 @@
     <AlertMessage ref="alertMessage" />
 
     <div v-for="group in searchShortcutGroups" :key="group.title" class="space-y-2">
-        <div class="px-1 text-[12px] leading-5 font-medium text-neutral-500">
+        <div class="text-[12px] leading-5 font-medium text-neutral-500">
             {{ group.title }}
         </div>
         <div class="settings-row-group divide-y divide-neutral-200/70">

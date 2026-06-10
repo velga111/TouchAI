@@ -496,7 +496,7 @@
                     </h2>
                 </div>
 
-                <div class="px-1 text-[12px] leading-5 font-medium text-neutral-500">
+                <div class="text-[12px] leading-5 font-medium text-neutral-500">
                     {{ t('settings.general.globalShortcutGroup') }}
                 </div>
 
