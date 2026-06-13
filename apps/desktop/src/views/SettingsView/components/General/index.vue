@@ -14,6 +14,10 @@
     import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
     import {
+        getSearchKeybindingDefinition,
+        type SearchKeybindingActionId,
+    } from '@/config/searchKeybindings';
+    import {
         resolveSearchWindowDefaultSize,
         type SearchWindowSizePreset,
     } from '@/config/searchWindow';
@@ -107,16 +111,22 @@
         }))
     );
 
-    function findGlobalShortcutSearchConflict(shortcut: string): boolean {
+    function findGlobalShortcutSearchConflict(shortcut: string): SearchKeybindingActionId | null {
         const normalizedShortcut = normalizeLocalShortcutString(shortcut);
         if (!normalizedShortcut) {
-            return false;
+            return null;
         }
 
-        return Object.values(settings.value.searchKeybindings).some((searchShortcut) => {
+        for (const [actionId, searchShortcut] of Object.entries(
+            settings.value.searchKeybindings
+        ) as Array<[SearchKeybindingActionId, string | null]>) {
             const normalizedSearchShortcut = normalizeLocalShortcutString(searchShortcut);
-            return normalizedSearchShortcut === normalizedShortcut;
-        });
+            if (normalizedSearchShortcut === normalizedShortcut) {
+                return actionId;
+            }
+        }
+
+        return null;
     }
 
     const captureShortcut = (event: KeyboardEvent) => {
@@ -264,11 +274,14 @@
     };
 
     const saveNewShortcut = async (newShortcut: string) => {
-        if (findGlobalShortcutSearchConflict(newShortcut)) {
+        const conflictActionId = findGlobalShortcutSearchConflict(newShortcut);
+        if (conflictActionId) {
             shortcutRegistrationFailed.value = false;
             displayShortcut.value = settings.value.globalShortcut;
             alertMessage.value?.error(
-                t('settings.general.searchShortcuts.errors.globalConflict'),
+                t('settings.general.searchShortcuts.errors.duplicate', {
+                    action: t(getSearchKeybindingDefinition(conflictActionId).labelKey),
+                }),
                 3000
             );
             return;
