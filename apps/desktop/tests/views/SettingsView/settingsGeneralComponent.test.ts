@@ -212,12 +212,12 @@ describe('SettingsGeneralSection', () => {
         expect(wrapper.text()).toContain('输入与请求');
         expect(wrapper.text()).toContain('窗口');
         expect(wrapper.text()).toContain('打开会话历史');
-        expect(wrapper.text()).toContain('快速打开会话历史列表。');
+        expect(wrapper.text()).toContain('快速打开或收起会话历史列表');
         expect(wrapper.text()).toContain('开始新会话');
         expect(wrapper.text()).toContain('切换窗口最大化');
-        expect(wrapper.text()).toContain('切换搜索窗口最大化。');
+        expect(wrapper.text()).toContain('切换搜索窗口最大化');
         expect(wrapper.text()).toContain('打开设置');
-        expect(wrapper.text()).toContain('快速打开设置窗口。');
+        expect(wrapper.text()).toContain('快速打开设置窗口');
         expect(
             (
                 wrapper.get('[data-testid="settings-search-shortcut-input-search.window.maximize"]')
