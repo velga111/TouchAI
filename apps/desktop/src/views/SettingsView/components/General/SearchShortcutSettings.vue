@@ -374,6 +374,21 @@
         updateSearchShortcutDisplay(actionId, shortcutCapturePrompt.value);
     }
 
+    function focusSearchShortcutInput(event: MouseEvent, row: SettingsSearchShortcutGroupRow) {
+        event.preventDefault();
+        if (row.kind !== 'configurable') {
+            return;
+        }
+
+        (event.currentTarget as HTMLInputElement).focus();
+    }
+
+    function clearSearchShortcutSelection(event: Event) {
+        const input = event.currentTarget as HTMLInputElement;
+        const cursorPosition = input.value.length;
+        input.setSelectionRange(cursorPosition, cursorPosition);
+    }
+
     async function confirmCapturedSearchShortcut(
         actionId: SearchKeybindingActionId,
         shortcut: string
@@ -538,7 +553,7 @@
                                 type="text"
                                 readonly
                                 :class="[
-                                    'w-full rounded-[10px] border px-9 py-2 text-center text-[12px] shadow-none [box-shadow:none] transition-colors select-none focus:shadow-none focus:[box-shadow:none] focus:outline-none',
+                                    'shortcut-capture-input w-full rounded-[10px] border px-9 py-2 text-center text-[12px] shadow-none [box-shadow:none] transition-colors select-none focus:shadow-none focus:[box-shadow:none] focus:outline-none',
                                     row.hasError
                                         ? 'border-red-300 bg-red-50 text-red-600'
                                         : row.isCapturing
@@ -558,7 +573,9 @@
                                         : undefined
                                 "
                                 :tabindex="row.kind === 'fixed' ? -1 : 0"
-                                @mousedown="row.kind === 'fixed' && $event.preventDefault()"
+                                @mousedown="focusSearchShortcutInput($event, row)"
+                                @select="clearSearchShortcutSelection"
+                                @dragstart.prevent
                                 @focus="startSearchShortcutCapture(row)"
                                 @blur="stopSearchShortcutCaptureAndSave(row)"
                             />
@@ -586,3 +603,21 @@
         </div>
     </div>
 </template>
+
+<style scoped>
+    .shortcut-capture-input {
+        caret-color: transparent;
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+    }
+
+    .shortcut-capture-input::selection {
+        background: transparent;
+    }
+
+    .shortcut-capture-input::-moz-selection {
+        background: transparent;
+    }
+</style>
