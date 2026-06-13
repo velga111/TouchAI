@@ -249,6 +249,18 @@
         const normalizedShortcut =
             shortcut === null ? null : normalizeLocalShortcutString(shortcut);
 
+        if (shortcut !== null && !normalizedShortcut) {
+            reportSearchShortcutError(
+                actionId,
+                'settings.general.searchShortcuts.errors.unsupported'
+            );
+            updateSearchShortcutDisplay(
+                actionId,
+                formatSearchShortcutForSettings(settings.value.searchKeybindings[actionId])
+            );
+            return false;
+        }
+
         if (normalizedShortcut) {
             const definition = getSearchKeybindingDefinition(actionId);
             const allowsModifierlessFunctionShortcut =

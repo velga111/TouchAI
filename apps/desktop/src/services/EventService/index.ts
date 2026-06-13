@@ -77,6 +77,7 @@ export type {
     GeneralSettingKey,
     McpServerStatus,
     McpStatusChangeEvent,
+    SearchSurfaceCommandEvent,
     SettingsGeneralUpdatedEvent,
     ShortcutCaptureSystemKeyEvent,
     WindowFocusEvent,

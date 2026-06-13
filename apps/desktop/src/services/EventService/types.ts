@@ -11,6 +11,7 @@ import type {
     PopupSessionSearchQueryChangePayload,
 } from '@services/PopupService/types';
 
+import type { SearchKeybindingActionId } from '@/config/searchKeybindings';
 import type { GeneralSettingKey, GeneralSettingValue } from '@/stores/setting';
 import type { SessionStatusReminderKind } from '@/utils/session';
 
@@ -56,6 +57,7 @@ export enum AppEvent {
     POPUP_SESSION_SEARCH_QUERY_CHANGE = 'popup-session-history-search-query-change',
     SEARCH_SURFACE_SHOWN = 'search-surface-shown',
     SEARCH_SURFACE_HIDDEN = 'search-surface-hidden',
+    SEARCH_SURFACE_COMMAND = 'search-surface-command',
     SESSION_TASK_STATUS_CHANGED = 'session:task:status-changed',
     SESSION_STATUS_REMINDER_ACTION = 'session-status-reminder:action',
 
@@ -116,6 +118,12 @@ export interface SearchSurfaceShownEvent {
 export interface SearchSurfaceHiddenEvent {
     reason: 'app-blur-hide' | 'manual-dismiss' | 'policy-toggle-hide';
     sequence?: number;
+}
+
+export interface SearchSurfaceCommandEvent {
+    actionId: SearchKeybindingActionId;
+    shortcut: string;
+    source: 'webview2-accelerator';
 }
 
 /**
@@ -201,6 +209,7 @@ export interface AppEventMap {
     [AppEvent.POPUP_SESSION_SEARCH_QUERY_CHANGE]: PopupSessionSearchQueryChangePayload;
     [AppEvent.SEARCH_SURFACE_SHOWN]: SearchSurfaceShownEvent;
     [AppEvent.SEARCH_SURFACE_HIDDEN]: SearchSurfaceHiddenEvent;
+    [AppEvent.SEARCH_SURFACE_COMMAND]: SearchSurfaceCommandEvent;
     [AppEvent.SESSION_TASK_STATUS_CHANGED]: SessionTaskStatusChangedEvent;
     [AppEvent.SESSION_STATUS_REMINDER_ACTION]: SessionStatusReminderActionEvent;
 

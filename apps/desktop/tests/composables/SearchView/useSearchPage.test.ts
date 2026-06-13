@@ -3,6 +3,7 @@ import { mountComposable } from '@tests/utils/composables';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick, ref } from 'vue';
 
+import { createDefaultSearchKeybindings } from '@/config/searchKeybindings';
 import { createSearchInteractionContext } from '@/views/SearchView/composables/searchInteraction';
 import {
     useSearchPageController,
@@ -47,6 +48,7 @@ const {
             },
             shortcut: {
                 registerGlobalShortcut: vi.fn(),
+                setSearchSurfaceShortcuts: vi.fn(),
             },
             window: {
                 hideSearchWindow: vi.fn(),
@@ -236,6 +238,7 @@ describe('useSearchPageLifecycle', () => {
         currentWindowMock.setAlwaysOnTop.mockResolvedValue(undefined);
 
         nativeMock.shortcut.registerGlobalShortcut.mockResolvedValue(undefined);
+        nativeMock.shortcut.setSearchSurfaceShortcuts.mockResolvedValue(undefined);
         nativeMock.runtime.getRuntimeInfo.mockResolvedValue({ isE2eTestMode: false });
         nativeMock.window.hideSearchWindow.mockResolvedValue(undefined);
         nativeMock.window.setTrayStatusIndicator.mockResolvedValue(undefined);
@@ -300,6 +303,74 @@ describe('useSearchPageLifecycle', () => {
         await nextTick();
 
         expect(nativeMock.window.setSearchSurfaceHideOnAppBlur).toHaveBeenLastCalledWith(false);
+
+        mounted.unmount();
+    });
+
+    it('syncs search surface shortcuts and delegates host accelerator commands', async () => {
+        const controller = createController();
+        const interactionContext = createSearchInteractionContext();
+        const searchKeybindings = ref(createDefaultSearchKeybindings());
+        const handleSearchSurfaceCommand = vi.fn().mockResolvedValue(undefined);
+
+        const mounted = await mountComposable(() =>
+            useSearchPageLifecycle({
+                controller: controller as never,
+                viewReady: ref(true),
+                isDragging: ref(false),
+                isPinned: ref(false),
+                searchKeybindings,
+                interactionContext,
+                syncWindowPinState: vi.fn().mockResolvedValue(false),
+                clearSession: vi.fn(),
+                handleSearchSurfaceCommand,
+            })
+        );
+
+        await flushLifecycle();
+
+        expect(nativeMock.shortcut.setSearchSurfaceShortcuts).toHaveBeenCalledWith(
+            expect.arrayContaining([
+                {
+                    actionId: 'search.model.toggle',
+                    shortcut: 'Mod+M',
+                },
+                {
+                    actionId: 'search.settings.open',
+                    shortcut: 'Mod+,',
+                },
+            ])
+        );
+
+        const commandHandler = eventHandlers.get(AppEvent.SEARCH_SURFACE_COMMAND);
+        expect(commandHandler).toBeDefined();
+        await commandHandler!({
+            actionId: 'search.model.toggle',
+            shortcut: 'Mod+M',
+            source: 'webview2-accelerator',
+        });
+        await flushLifecycle();
+
+        expect(handleSearchSurfaceCommand).toHaveBeenCalledWith({
+            actionId: 'search.model.toggle',
+            shortcut: 'Mod+M',
+            source: 'webview2-accelerator',
+        });
+
+        searchKeybindings.value = {
+            ...searchKeybindings.value,
+            'search.model.toggle': null,
+        };
+        await flushLifecycle();
+
+        expect(nativeMock.shortcut.setSearchSurfaceShortcuts).toHaveBeenLastCalledWith(
+            expect.not.arrayContaining([
+                {
+                    actionId: 'search.model.toggle',
+                    shortcut: 'Mod+M',
+                },
+            ])
+        );
 
         mounted.unmount();
     });

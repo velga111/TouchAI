@@ -20,7 +20,9 @@ use webview2_com::Microsoft::Web::WebView2::Win32::{
 #[cfg(target_os = "windows")]
 use windows::Win32::Foundation::{BOOL, HWND, LPARAM, LRESULT, TRUE, WPARAM};
 #[cfg(target_os = "windows")]
-use windows::Win32::UI::Input::KeyboardAndMouse::{GetKeyState, VK_CONTROL, VK_SHIFT, VK_SPACE};
+use windows::Win32::UI::Input::KeyboardAndMouse::{
+    GetKeyState, VK_CONTROL, VK_LWIN, VK_MENU, VK_RWIN, VK_SHIFT, VK_SPACE,
+};
 #[cfg(target_os = "windows")]
 use windows::Win32::UI::Shell::{DefSubclassProc, SetWindowSubclass};
 #[cfg(target_os = "windows")]
@@ -190,6 +192,12 @@ fn is_system_menu_accelerator_command(key_event_kind: i32, virtual_key: u32) -> 
 }
 
 #[cfg(target_os = "windows")]
+fn is_accelerator_key_down_event(key_event_kind: i32) -> bool {
+    key_event_kind == COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN.0
+        || key_event_kind == COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_DOWN.0
+}
+
+#[cfg(target_os = "windows")]
 /// 注册 WebView2 accelerator 处理器，将 Alt+Space 转成 Tauri 事件供前端捕获。
 ///
 /// WebView2 把 Alt+Space 当作 system accelerator，默认不会派发 DOM keydown；
@@ -217,6 +225,35 @@ fn register_system_menu_accelerator_handler<R: Runtime>(
                 args.VirtualKey(&mut virtual_key)?;
 
                 if !is_system_menu_accelerator_command(key_event_kind.0, virtual_key) {
+                    if !is_accelerator_key_down_event(key_event_kind.0) {
+                        return Ok(());
+                    }
+
+                    let is_ctrl_down = (GetKeyState(i32::from(VK_CONTROL.0)) as u16 & 0x8000) != 0;
+                    let is_alt_down = (GetKeyState(i32::from(VK_MENU.0)) as u16 & 0x8000) != 0;
+                    let is_shift_down = (GetKeyState(i32::from(VK_SHIFT.0)) as u16 & 0x8000) != 0;
+                    let is_super_down = (GetKeyState(i32::from(VK_LWIN.0)) as u16 & 0x8000) != 0
+                        || (GetKeyState(i32::from(VK_RWIN.0)) as u16 & 0x8000) != 0;
+
+                    let Some(command) =
+                        crate::core::system::shortcut::find_search_surface_command_for_windows_accelerator(
+                            virtual_key,
+                            is_ctrl_down,
+                            is_alt_down,
+                            is_shift_down,
+                            is_super_down,
+                        )
+                    else {
+                        return Ok(());
+                    };
+
+                    if let Ok(args2) =
+                        Interface::cast::<ICoreWebView2AcceleratorKeyPressedEventArgs2>(&args)
+                    {
+                        let _ = args2.SetIsBrowserAcceleratorKeyEnabled(false);
+                    }
+                    let _ = args.SetHandled(true);
+                    let _ = app_handle.emit("search-surface-command", command);
                     return Ok(());
                 }
 

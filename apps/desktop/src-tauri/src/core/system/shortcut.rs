@@ -13,6 +13,29 @@ use tauri_plugin_global_shortcut::{
 
 static CURRENT_SHORTCUT: Mutex<Option<Shortcut>> = Mutex::new(None);
 static REGISTRATION_STATUS: Mutex<(bool, Option<String>)> = Mutex::new((false, None));
+static SEARCH_SURFACE_SHORTCUTS: Mutex<Vec<SearchSurfaceShortcut>> = Mutex::new(Vec::new());
+
+#[derive(Debug, Clone, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SearchSurfaceShortcutEntry {
+    pub action_id: String,
+    pub shortcut: String,
+}
+
+#[derive(Debug, Clone)]
+struct SearchSurfaceShortcut {
+    action_id: String,
+    shortcut: String,
+    parsed: Shortcut,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SearchSurfaceCommand {
+    pub action_id: String,
+    pub shortcut: String,
+    pub source: &'static str,
+}
 
 /// 先异步跳出 WM_HOTKEY 回调栈，再把搜索窗口切换投递回 Tauri 主事件循环。
 fn schedule_search_window_toggle<R: Runtime>(app_handle: AppHandle<R>) {
@@ -65,12 +88,6 @@ pub fn register_global_shortcut<R: Runtime>(
         .register(new_shortcut)
         .map_err(|e| format!("Failed to register shortcut: {}", e));
 
-    if result.is_err() {
-        if let Some(old_shortcut) = old_shortcut {
-            let _ = app.global_shortcut().register(old_shortcut);
-        }
-    }
-
     match result {
         Ok(_) => {
             if let Ok(mut current) = CURRENT_SHORTCUT.lock() {
@@ -81,7 +98,27 @@ pub fn register_global_shortcut<R: Runtime>(
             }
         }
         Err(ref e) => {
-            if let Ok(mut status) = REGISTRATION_STATUS.lock() {
+            if let Some(old_shortcut) = old_shortcut {
+                match app.global_shortcut().register(old_shortcut) {
+                    Ok(_) => {
+                        if let Ok(mut status) = REGISTRATION_STATUS.lock() {
+                            *status = (false, None);
+                        }
+                    }
+                    Err(restore_error) => {
+                        let message = format!(
+                            "{}; failed to restore previous shortcut: {}",
+                            e, restore_error
+                        );
+                        if let Ok(mut current) = CURRENT_SHORTCUT.lock() {
+                            *current = None;
+                        }
+                        if let Ok(mut status) = REGISTRATION_STATUS.lock() {
+                            *status = (true, Some(message));
+                        }
+                    }
+                }
+            } else if let Ok(mut status) = REGISTRATION_STATUS.lock() {
                 *status = (true, Some(e.clone()));
             }
         }
@@ -95,6 +132,156 @@ pub fn get_shortcut_status() -> (bool, Option<String>) {
         .lock()
         .map(|status| status.clone())
         .unwrap_or((false, None))
+}
+
+pub fn set_search_surface_shortcuts(
+    entries: Vec<SearchSurfaceShortcutEntry>,
+) -> Result<(), String> {
+    let mut parsed_entries = Vec::with_capacity(entries.len());
+    for entry in entries {
+        parsed_entries.push(SearchSurfaceShortcut {
+            parsed: parse_shortcut(&entry.shortcut)?,
+            action_id: entry.action_id,
+            shortcut: entry.shortcut,
+        });
+    }
+
+    let mut shortcuts = SEARCH_SURFACE_SHORTCUTS
+        .lock()
+        .map_err(|_| "Failed to lock search surface shortcuts".to_string())?;
+    *shortcuts = parsed_entries;
+    Ok(())
+}
+
+pub fn find_search_surface_command_for_windows_accelerator(
+    virtual_key: u32,
+    control: bool,
+    alt: bool,
+    shift: bool,
+    super_key: bool,
+) -> Option<SearchSurfaceCommand> {
+    let candidate = windows_accelerator_to_shortcut(virtual_key, control, alt, shift, super_key)?;
+    let shortcuts = SEARCH_SURFACE_SHORTCUTS.lock().ok()?;
+    shortcuts
+        .iter()
+        .find(|entry| entry.parsed.mods == candidate.mods && entry.parsed.key == candidate.key)
+        .map(|entry| SearchSurfaceCommand {
+            action_id: entry.action_id.clone(),
+            shortcut: entry.shortcut.clone(),
+            source: "webview2-accelerator",
+        })
+}
+
+fn windows_accelerator_to_shortcut(
+    virtual_key: u32,
+    control: bool,
+    alt: bool,
+    shift: bool,
+    super_key: bool,
+) -> Option<Shortcut> {
+    let key = windows_virtual_key_to_code(virtual_key)?;
+    let mut modifiers = Modifiers::empty();
+    if control {
+        modifiers |= Modifiers::CONTROL;
+    }
+    if alt {
+        modifiers |= Modifiers::ALT;
+    }
+    if shift {
+        modifiers |= Modifiers::SHIFT;
+    }
+    if super_key {
+        modifiers |= Modifiers::SUPER;
+    }
+
+    Some(Shortcut::new(
+        if modifiers.is_empty() {
+            None
+        } else {
+            Some(modifiers)
+        },
+        key,
+    ))
+}
+
+fn windows_virtual_key_to_code(virtual_key: u32) -> Option<Code> {
+    match virtual_key {
+        0x08 => Some(Code::Backspace),
+        0x09 => Some(Code::Tab),
+        0x0D => Some(Code::Enter),
+        0x1B => Some(Code::Escape),
+        0x20 => Some(Code::Space),
+        0x21 => Some(Code::PageUp),
+        0x22 => Some(Code::PageDown),
+        0x23 => Some(Code::End),
+        0x24 => Some(Code::Home),
+        0x25 => Some(Code::ArrowLeft),
+        0x26 => Some(Code::ArrowUp),
+        0x27 => Some(Code::ArrowRight),
+        0x28 => Some(Code::ArrowDown),
+        0x2D => Some(Code::Insert),
+        0x2E => Some(Code::Delete),
+        0x30 => Some(Code::Digit0),
+        0x31 => Some(Code::Digit1),
+        0x32 => Some(Code::Digit2),
+        0x33 => Some(Code::Digit3),
+        0x34 => Some(Code::Digit4),
+        0x35 => Some(Code::Digit5),
+        0x36 => Some(Code::Digit6),
+        0x37 => Some(Code::Digit7),
+        0x38 => Some(Code::Digit8),
+        0x39 => Some(Code::Digit9),
+        0x41 => Some(Code::KeyA),
+        0x42 => Some(Code::KeyB),
+        0x43 => Some(Code::KeyC),
+        0x44 => Some(Code::KeyD),
+        0x45 => Some(Code::KeyE),
+        0x46 => Some(Code::KeyF),
+        0x47 => Some(Code::KeyG),
+        0x48 => Some(Code::KeyH),
+        0x49 => Some(Code::KeyI),
+        0x4A => Some(Code::KeyJ),
+        0x4B => Some(Code::KeyK),
+        0x4C => Some(Code::KeyL),
+        0x4D => Some(Code::KeyM),
+        0x4E => Some(Code::KeyN),
+        0x4F => Some(Code::KeyO),
+        0x50 => Some(Code::KeyP),
+        0x51 => Some(Code::KeyQ),
+        0x52 => Some(Code::KeyR),
+        0x53 => Some(Code::KeyS),
+        0x54 => Some(Code::KeyT),
+        0x55 => Some(Code::KeyU),
+        0x56 => Some(Code::KeyV),
+        0x57 => Some(Code::KeyW),
+        0x58 => Some(Code::KeyX),
+        0x59 => Some(Code::KeyY),
+        0x5A => Some(Code::KeyZ),
+        0x70 => Some(Code::F1),
+        0x71 => Some(Code::F2),
+        0x72 => Some(Code::F3),
+        0x73 => Some(Code::F4),
+        0x74 => Some(Code::F5),
+        0x75 => Some(Code::F6),
+        0x76 => Some(Code::F7),
+        0x77 => Some(Code::F8),
+        0x78 => Some(Code::F9),
+        0x79 => Some(Code::F10),
+        0x7A => Some(Code::F11),
+        0x7B => Some(Code::F12),
+        0xBA => Some(Code::Semicolon),
+        0xBB => Some(Code::Equal),
+        0xBC => Some(Code::Comma),
+        0xBD => Some(Code::Minus),
+        0xBE => Some(Code::Period),
+        0xBF => Some(Code::Slash),
+        0xC0 => Some(Code::Backquote),
+        0xDB => Some(Code::BracketLeft),
+        0xDC => Some(Code::Backslash),
+        0xDD => Some(Code::BracketRight),
+        0xDE => Some(Code::Quote),
+        _ => None,
+    }
 }
 
 pub fn parse_shortcut(shortcut_str: &str) -> Result<Shortcut, String> {
@@ -143,6 +330,17 @@ pub fn parse_shortcut(shortcut_str: &str) -> Result<Shortcut, String> {
                     "arrowdown" | "down" => Code::ArrowDown,
                     "arrowleft" | "left" => Code::ArrowLeft,
                     "arrowright" | "right" => Code::ArrowRight,
+                    "," | "comma" => Code::Comma,
+                    "." | "period" => Code::Period,
+                    "=" | "equal" | "equals" => Code::Equal,
+                    "-" | "minus" => Code::Minus,
+                    ";" | "semicolon" => Code::Semicolon,
+                    "/" | "slash" => Code::Slash,
+                    "'" | "quote" => Code::Quote,
+                    "`" | "backquote" => Code::Backquote,
+                    "[" | "bracketleft" => Code::BracketLeft,
+                    "]" | "bracketright" => Code::BracketRight,
+                    "\\" | "backslash" => Code::Backslash,
                     "a" => Code::KeyA,
                     "b" => Code::KeyB,
                     "c" => Code::KeyC,
@@ -270,5 +468,52 @@ mod tests {
         let shortcut = parse_shortcut("cmd+SPACE").expect("lowercase cmd parses");
         assert_eq!(shortcut.mods, Modifiers::SUPER);
         assert_eq!(shortcut.key, Code::Space);
+    }
+
+    #[test]
+    fn parse_shortcut_accepts_punctuation_keys() {
+        let shortcut = parse_shortcut("Mod+,").expect("mod+comma parses");
+        let expected_mod = if cfg!(target_os = "macos") {
+            Modifiers::SUPER
+        } else {
+            Modifiers::CONTROL
+        };
+        assert_eq!(shortcut.mods, expected_mod);
+        assert_eq!(shortcut.key, Code::Comma);
+
+        let shortcut = parse_shortcut("Ctrl+=").expect("ctrl+equal parses");
+        assert_eq!(shortcut.mods, Modifiers::CONTROL);
+        assert_eq!(shortcut.key, Code::Equal);
+    }
+
+    #[test]
+    fn search_surface_command_matches_windows_accelerator() {
+        set_search_surface_shortcuts(vec![
+            SearchSurfaceShortcutEntry {
+                action_id: "search.model.toggle".to_string(),
+                shortcut: "Mod+M".to_string(),
+            },
+            SearchSurfaceShortcutEntry {
+                action_id: "search.settings.open".to_string(),
+                shortcut: "Mod+,".to_string(),
+            },
+        ])
+        .expect("shortcuts sync");
+
+        let command = find_search_surface_command_for_windows_accelerator(
+            0xBC,
+            !cfg!(target_os = "macos"),
+            false,
+            false,
+            cfg!(target_os = "macos"),
+        )
+        .expect("comma shortcut matches");
+        assert_eq!(command.action_id, "search.settings.open");
+        assert_eq!(command.shortcut, "Mod+,");
+
+        assert!(find_search_surface_command_for_windows_accelerator(
+            0x4D, false, false, false, false
+        )
+        .is_none());
     }
 }

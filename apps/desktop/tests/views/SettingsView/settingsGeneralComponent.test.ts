@@ -558,6 +558,39 @@ describe('SettingsGeneralSection', () => {
         });
     });
 
+    it('rejects captured plus shortcuts instead of saving a disabled shortcut', async () => {
+        const wrapper = mount(GeneralSection);
+
+        await flushPromises();
+
+        const input = wrapper.get(
+            '[data-testid="settings-search-shortcut-input-search.history.open"]'
+        );
+        await input.trigger('focus');
+        await flushPromises();
+
+        window.dispatchEvent(
+            new KeyboardEvent('keydown', {
+                key: '+',
+                code: 'Equal',
+                ctrlKey: true,
+                shiftKey: true,
+            })
+        );
+        await flushPromises();
+
+        expect(settingsStoreMock.updateSearchKeybindings).not.toHaveBeenCalled();
+        expect((input.element as HTMLInputElement).value).toBe('Ctrl+H');
+
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'F1' }));
+        await flushPromises();
+
+        expect(settingsStoreMock.updateSearchKeybindings).toHaveBeenCalledWith({
+            ...settingsStoreMock.settings.value.searchKeybindings,
+            'search.history.open': 'F1',
+        });
+    });
+
     it('shows fixed search shortcuts as unsupported for editing', async () => {
         const wrapper = mount(GeneralSection);
 

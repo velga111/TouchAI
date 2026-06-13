@@ -14,6 +14,7 @@
     import { storeToRefs } from 'pinia';
     import { computed, nextTick, onMounted, onUnmounted, reactive, ref, toRef, watch } from 'vue';
 
+    import type { SearchKeybindingActionId } from '@/config/searchKeybindings';
     import { t } from '@/i18n';
     import { mcpManager } from '@/services/AgentService/infrastructure/mcp';
     import type { SessionTaskStatus } from '@/services/AgentService/task/types';
@@ -399,12 +400,47 @@
         await refreshModelDropdownData();
     }
 
+    async function handleSearchKeybindingAction(actionId: SearchKeybindingActionId) {
+        switch (actionId) {
+            case 'search.history.open':
+                await openHistoryDialog();
+                return;
+            case 'search.input.focus':
+                await hideAllPopups();
+                await controller.focusSearchInput();
+                return;
+            case 'search.session.new':
+                await handleStartNewSession();
+                return;
+            case 'search.session.reopenLastClosed':
+                await handleReopenLastClosedSession();
+                return;
+            case 'search.model.toggle':
+                await handleToggleModelDropdownRequest();
+                return;
+            case 'search.window.pin':
+                await handleToggleWindowPin();
+                return;
+            case 'search.window.maximize':
+                await handleToggleMaximize();
+                return;
+            case 'search.settings.open':
+                await native.window.openSettingsWindow();
+                return;
+            default: {
+                const exhaustiveActionId: never = actionId;
+                throw new Error(`Unhandled search keybinding action: ${exhaustiveActionId}`);
+            }
+        }
+    }
+
     const { hideSearchWindow } = useSearchPageLifecycle({
         controller,
         viewReady,
         isDragging,
         isPinned,
         isMaximized: effectiveWindowMaximized,
+        searchKeybindings,
         interactionContext: searchInteractionContext,
         syncWindowPinState,
         clearSession: clearSessionToIdle,
@@ -415,6 +451,12 @@
         handleSessionStatusReminderAction,
         handleAiModelsUpdated,
         handleShortcutAutoPaste: tryShortcutAutoPaste,
+        handleSearchSurfaceCommand: async (payload) => {
+            if (!viewReady.value) {
+                return;
+            }
+            await handleSearchKeybindingAction(payload.actionId);
+        },
     });
 
     function getSessionHistoryPopupData(): SessionHistoryData {
@@ -537,6 +579,7 @@
         toggleWindowPin: handleToggleWindowPin,
         toggleWindowMaximize: handleToggleMaximize,
         openSettingsWindow: native.window.openSettingsWindow,
+        handleSearchKeybindingAction,
         handleSubmit,
         cancelRequest,
         clearSession: clearSessionToIdle,

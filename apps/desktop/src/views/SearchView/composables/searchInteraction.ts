@@ -7,7 +7,7 @@ import { AppEvent, eventService } from '@services/EventService';
 import type { PopupKeydownPayload } from '@services/PopupService';
 import { computed, type ComputedRef, reactive, type Ref, ref, watch } from 'vue';
 
-import type { SearchKeybindings } from '@/config/searchKeybindings';
+import type { SearchKeybindingActionId, SearchKeybindings } from '@/config/searchKeybindings';
 import { useAskUserStore } from '@/stores/askUser';
 import {
     cloneInputHistorySnapshot,
@@ -137,6 +137,7 @@ export interface UseSearchKeyboardOptions {
     toggleWindowPin: () => Promise<void>;
     toggleWindowMaximize: () => Promise<void>;
     openSettingsWindow: () => Promise<void>;
+    handleSearchKeybindingAction?: (actionId: SearchKeybindingActionId) => void | Promise<void>;
     handleSubmit: (query: string) => Promise<void>;
     cancelRequest: () => void;
     clearSession: () => void;
@@ -675,6 +676,7 @@ export function createSearchKeydownHandler(options: UseSearchKeyboardOptions) {
         toggleWindowPin,
         toggleWindowMaximize,
         openSettingsWindow,
+        handleSearchKeybindingAction,
         handleSubmit,
         cancelRequest,
         clearSession,
@@ -776,6 +778,11 @@ export function createSearchKeydownHandler(options: UseSearchKeyboardOptions) {
             queryText.value = '';
         },
         onSearchKeybindingAction: async (actionId) => {
+            if (handleSearchKeybindingAction) {
+                await handleSearchKeybindingAction(actionId);
+                return;
+            }
+
             switch (actionId) {
                 case 'search.history.open':
                     await openHistoryDialog();
