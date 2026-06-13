@@ -32,8 +32,10 @@
     import { type OutputScrollBehavior, useSettingsStore } from '@/stores/settings';
     import {
         captureShortcutFromKeyboardEvent,
+        formatShortcutForDisplay,
         hasCommandModifier,
         isMacPlatform,
+        isReservedGlobalShortcut,
         isReservedLocalShortcutKey,
         normalizeLocalShortcutString,
     } from '@/utils/shortcuts';
@@ -101,15 +103,20 @@
     const alertMessage = ref<InstanceType<typeof AlertMessage> | null>(null);
     const shortcutRegistrationFailed = ref(false);
     const showGlobalShortcutPresetMenu = ref(false);
-    // Mac 上 Cmd+Space 被 Spotlight 占用，因此预设使用 Option+Space（Alt+Space）和 Ctrl+Space；
-    // Windows/Linux 上 Cmd 由 Win/Super 键代表，前端统一拒绝其作为快捷键，预设保持 Alt/Ctrl 组合。
-    const globalShortcutPresetShortcuts = ['Alt+Space', 'Ctrl+Space'] as const;
-    const globalShortcutPresetOptions = computed(() =>
-        globalShortcutPresetShortcuts.map((shortcut) => ({
+    const globalShortcutPresetOptions = computed(() => {
+        const shortcuts = isMacPlatform()
+            ? ['Option+Space', 'Option+Shift+Space']
+            : ['Alt+Space', 'Ctrl+Space'];
+
+        return shortcuts.map((shortcut) => ({
             label: shortcut,
             value: shortcut,
-        }))
-    );
+        }));
+    });
+
+    function formatGlobalShortcutForSettings(shortcut: string | null | undefined): string {
+        return formatShortcutForDisplay(shortcut);
+    }
 
     function findGlobalShortcutSearchConflict(shortcut: string): SearchKeybindingActionId | null {
         const normalizedShortcut = normalizeLocalShortcutString(shortcut);
@@ -196,10 +203,10 @@
             return;
         }
 
-        displayShortcut.value = shortcut;
+        displayShortcut.value = formatGlobalShortcutForSettings(shortcut);
         hasCapturedShortcut.value = true;
         showGlobalShortcutPresetMenu.value = false;
-        void confirmCapturedShortcut(shortcut);
+        void confirmCapturedShortcut(displayShortcut.value);
     };
 
     let unlistenSystemKey: UnlistenFn | null = null;
@@ -230,8 +237,11 @@
         isCapturing.value = false;
         showGlobalShortcutPresetMenu.value = false;
 
-        if (shortcut === settings.value.globalShortcut) {
-            displayShortcut.value = settings.value.globalShortcut;
+        if (
+            normalizeLocalShortcutString(shortcut) ===
+            normalizeLocalShortcutString(settings.value.globalShortcut)
+        ) {
+            displayShortcut.value = formatGlobalShortcutForSettings(settings.value.globalShortcut);
             return;
         }
 
@@ -247,7 +257,7 @@
         showGlobalShortcutPresetMenu.value = false;
 
         const completion = resolveShortcutCaptureCompletion({
-            currentShortcut: settings.value.globalShortcut,
+            currentShortcut: formatGlobalShortcutForSettings(settings.value.globalShortcut),
             displayShortcut: displayShortcut.value,
             hasCapturedShortcut: hasCapturedShortcut.value,
         });
@@ -274,10 +284,17 @@
     };
 
     const saveNewShortcut = async (newShortcut: string) => {
+        if (isReservedGlobalShortcut(newShortcut)) {
+            shortcutRegistrationFailed.value = false;
+            displayShortcut.value = formatGlobalShortcutForSettings(settings.value.globalShortcut);
+            alertMessage.value?.warning(t('settings.general.globalShortcutReservedOnMac'), 4000);
+            return;
+        }
+
         const conflictActionId = findGlobalShortcutSearchConflict(newShortcut);
         if (conflictActionId) {
             shortcutRegistrationFailed.value = false;
-            displayShortcut.value = settings.value.globalShortcut;
+            displayShortcut.value = formatGlobalShortcutForSettings(settings.value.globalShortcut);
             alertMessage.value?.error(
                 t('settings.general.searchShortcuts.errors.duplicate', {
                     action: t(getSearchKeybindingDefinition(conflictActionId).labelKey),
@@ -294,18 +311,18 @@
             const registered = await registerShortcut(newShortcut);
             if (!registered) {
                 shortcutRegistrationFailed.value = true;
-                displayShortcut.value = newShortcut;
+                displayShortcut.value = formatGlobalShortcutForSettings(newShortcut);
                 return;
             }
 
             await saveShortcutToDatabase(newShortcut);
             settings.value.globalShortcut = newShortcut;
-            displayShortcut.value = newShortcut;
+            displayShortcut.value = formatGlobalShortcutForSettings(newShortcut);
             alertMessage.value?.success(t('settings.general.shortcutSaved'), 3000);
         } catch (error) {
             console.error('Failed to save shortcut:', error);
             alertMessage.value?.error(t('settings.general.saveShortcutFailed'), 3000);
-            displayShortcut.value = settings.value.globalShortcut;
+            displayShortcut.value = formatGlobalShortcutForSettings(settings.value.globalShortcut);
             shortcutRegistrationFailed.value = false;
         } finally {
             isSaving.value = false;
@@ -337,7 +354,7 @@
         () => settings.value.globalShortcut,
         (shortcut) => {
             if (!isCapturing.value && !shortcutRegistrationFailed.value) {
-                displayShortcut.value = shortcut;
+                displayShortcut.value = formatGlobalShortcutForSettings(shortcut);
             }
         }
     );
@@ -353,7 +370,7 @@
     const loadSettings = async () => {
         try {
             await settingsStore.initialize();
-            displayShortcut.value = settings.value.globalShortcut;
+            displayShortcut.value = formatGlobalShortcutForSettings(settings.value.globalShortcut);
 
             const [failed, error] = await native.shortcut.getShortcutStatus();
             if (failed) {

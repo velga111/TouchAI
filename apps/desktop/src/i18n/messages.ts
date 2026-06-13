@@ -86,6 +86,8 @@ const zhCNMessages = {
     'settings.general.shortcutHelp':
         '点击输入框后按下您想要设置的快捷键组合。支持的修饰键：Ctrl、Alt、Shift',
     'settings.general.winKeyUnsupported': '不支持 Win/Super 键组合，请使用 Ctrl、Alt、Shift',
+    'settings.general.globalShortcutReservedOnMac':
+        '该快捷键容易与 macOS 系统功能或输入法冲突，请改用 Option+Space 或 Option+Shift+Space',
     'settings.general.shortcutSaved': '快捷键保存成功',
     'settings.general.noShortcut': '无',
     'settings.general.globalShortcutGroup': '全局唤起',
@@ -1048,6 +1050,8 @@ const enUSMessages: Record<keyof typeof zhCNMessages, string> = {
         'Click the field and press the shortcut you want. Supported modifiers: Ctrl, Alt, Shift',
     'settings.general.winKeyUnsupported':
         'Win/Super key combinations are not supported. Use Ctrl, Alt, or Shift.',
+    'settings.general.globalShortcutReservedOnMac':
+        'This shortcut can conflict with macOS system features or input methods. Use Option+Space or Option+Shift+Space.',
     'settings.general.shortcutSaved': 'Shortcut saved',
     'settings.general.noShortcut': 'None',
     'settings.general.globalShortcutGroup': 'Global activation',

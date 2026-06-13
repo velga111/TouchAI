@@ -222,6 +222,13 @@ mod tests {
     }
 
     #[test]
+    fn parse_shortcut_accepts_option_alias_for_alt() {
+        let shortcut = parse_shortcut("Option+Shift+Space").expect("option+shift+space parses");
+        assert_eq!(shortcut.mods, Modifiers::ALT | Modifiers::SHIFT);
+        assert_eq!(shortcut.key, Code::Space);
+    }
+
+    #[test]
     fn parse_shortcut_accepts_super_aliases_for_cmd_or_win() {
         // global-hotkey 把 Cmd（macOS）和 Win/Super（Linux）都映射到 SUPER；
         // 这里不区分平台，所有别名都应解析到 Modifiers::SUPER。

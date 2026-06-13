@@ -7,6 +7,7 @@ import {
     hasCommandModifier,
     hasRequiredModifier,
     isModifierlessFunctionShortcut,
+    isReservedGlobalShortcut,
     isReservedLocalShortcut,
     isReservedLocalShortcutKey,
     matchShortcut,
@@ -56,7 +57,8 @@ describe('shortcut utilities', () => {
 
         setPlatform('MacIntel');
 
-        expect(formatShortcutForDisplay('Mod+Ctrl+Alt+Shift+H')).toBe('Cmd+Ctrl+Alt+Shift+H');
+        expect(formatShortcutForDisplay('Mod+Ctrl+Alt+Shift+H')).toBe('Cmd+Ctrl+Option+Shift+H');
+        expect(formatShortcutForDisplay('Alt+Space')).toBe('Option+Space');
         expect(toCurrentPlatformShortcut('Mod+H')).toBe('Cmd+H');
     });
 
@@ -127,7 +129,7 @@ describe('shortcut utilities', () => {
             )
         ).toEqual({
             shortcut: 'Mod+Ctrl+Alt+Shift+K',
-            displayShortcut: 'Cmd+Ctrl+Alt+Shift+K',
+            displayShortcut: 'Cmd+Ctrl+Option+Shift+K',
         });
     });
 
@@ -170,5 +172,18 @@ describe('shortcut utilities', () => {
         expect(findShortcutConflict('Mod+H', entries, 'history')).toBeNull();
         expect(findShortcutConflict('Mod+P', entries)).toBeNull();
         expect(findShortcutConflict('', entries)).toBeNull();
+    });
+
+    it('classifies macOS system global shortcut conflicts', () => {
+        expect(isReservedGlobalShortcut('Mod+Space')).toBe(false);
+        expect(isReservedGlobalShortcut('Ctrl+Space')).toBe(false);
+
+        setPlatform('MacIntel');
+
+        expect(isReservedGlobalShortcut('Cmd+Space')).toBe(true);
+        expect(isReservedGlobalShortcut('Mod+Space')).toBe(true);
+        expect(isReservedGlobalShortcut('Ctrl+Space')).toBe(true);
+        expect(isReservedGlobalShortcut('Option+Space')).toBe(false);
+        expect(isReservedGlobalShortcut('Option+Shift+Space')).toBe(false);
     });
 });

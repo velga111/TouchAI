@@ -89,6 +89,10 @@ function getPrimaryModifierLabel(): 'Cmd' | 'Ctrl' {
     return isMacPlatform() ? 'Cmd' : 'Ctrl';
 }
 
+function getAltModifierLabel(): 'Option' | 'Alt' {
+    return isMacPlatform() ? 'Option' : 'Alt';
+}
+
 function usesPrimaryModifier(input: ShortcutMatchInput): boolean {
     return isMacPlatform() ? Boolean(input.metaKey) : Boolean(input.ctrlKey);
 }
@@ -202,6 +206,9 @@ export function formatShortcutForDisplay(shortcut: string | null | undefined): s
     const displayModifiers = modifiers.map((modifier) => {
         if (modifier === 'Mod') {
             return getPrimaryModifierLabel();
+        }
+        if (modifier === 'Alt') {
+            return getAltModifierLabel();
         }
         return modifier;
     });
@@ -320,6 +327,15 @@ export function isReservedLocalShortcutKey(
 ): boolean {
     const normalizedKey = resolveKeyboardEventShortcutKey(key, code);
     return normalizedKey ? RESERVED_LOCAL_SHORTCUT_KEYS.has(normalizedKey) : false;
+}
+
+export function isReservedGlobalShortcut(shortcut: string | null | undefined): boolean {
+    if (!isMacPlatform()) {
+        return false;
+    }
+
+    const normalized = normalizeLocalShortcutString(shortcut);
+    return normalized === 'Mod+Space' || normalized === 'Ctrl+Space';
 }
 
 export function hasRequiredModifier(shortcut: string | null | undefined): boolean {

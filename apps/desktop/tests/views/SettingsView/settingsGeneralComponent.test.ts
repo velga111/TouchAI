@@ -6,6 +6,15 @@ import { createDefaultSearchKeybindings } from '@/config/searchKeybindings';
 import { setLocale } from '@/i18n';
 import GeneralSection from '@/views/SettingsView/components/General/index.vue';
 
+const originalPlatform = navigator.platform;
+
+function setPlatform(platform: string) {
+    Object.defineProperty(window.navigator, 'platform', {
+        configurable: true,
+        value: platform,
+    });
+}
+
 const settingsStoreMock = vi.hoisted(() => {
     const createGeneralSettingsMock = (searchKeybindings: Record<string, string | null>) => ({
         globalShortcut: 'Alt+Space',
@@ -178,6 +187,7 @@ vi.mock('@services/AppUpdateService', () => ({
 describe('SettingsGeneralSection', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        setPlatform('Win32');
         setLocale('zh-CN');
         appUpdateServiceMock.state = appUpdateServiceMock.createState();
         nativeMock.shortcut.getShortcutStatus.mockResolvedValue([false, null]);
@@ -185,6 +195,10 @@ describe('SettingsGeneralSection', () => {
         settingsStoreMock.settings.value = settingsStoreMock.createGeneralSettingsMock(
             createDefaultSearchKeybindings()
         );
+    });
+
+    afterEach(() => {
+        setPlatform(originalPlatform);
     });
 
     it('renders the general settings groups and row controls', async () => {
@@ -300,6 +314,74 @@ describe('SettingsGeneralSection', () => {
         expect(wrapper.find('[data-testid="settings-global-shortcut-preset-menu"]').exists()).toBe(
             false
         );
+    });
+
+    it('uses macOS shortcut labels and omits input-method-conflicting presets', async () => {
+        setPlatform('MacIntel');
+        const wrapper = mount(GeneralSection);
+
+        await flushPromises();
+
+        const input = wrapper.get('[data-testid="settings-global-shortcut-input"]');
+        expect((input.element as HTMLInputElement).value).toBe('Option+Space');
+
+        await input.trigger('focus');
+        await flushPromises();
+
+        expect(wrapper.find('[data-testid="settings-global-shortcut-preset-menu"]').exists()).toBe(
+            true
+        );
+        expect(
+            wrapper.get('[data-testid="settings-global-shortcut-preset-Option+Space"]').text()
+        ).toBe('Option+Space');
+        expect(
+            wrapper.get('[data-testid="settings-global-shortcut-preset-Option+Shift+Space"]').text()
+        ).toBe('Option+Shift+Space');
+        expect(
+            wrapper.find('[data-testid="settings-global-shortcut-preset-Ctrl+Space"]').exists()
+        ).toBe(false);
+
+        await wrapper
+            .get('[data-testid="settings-global-shortcut-preset-Option+Shift+Space"]')
+            .trigger('click');
+        await flushPromises();
+
+        expect(nativeMock.shortcut.registerGlobalShortcut).toHaveBeenCalledWith(
+            'Option+Shift+Space'
+        );
+        expect(settingsStoreMock.updateGlobalShortcut).toHaveBeenCalledWith('Option+Shift+Space');
+        expect((input.element as HTMLInputElement).value).toBe('Option+Shift+Space');
+    });
+
+    it('blocks macOS system-reserved global shortcuts before registration', async () => {
+        setPlatform('MacIntel');
+        const wrapper = mount(GeneralSection);
+
+        await flushPromises();
+
+        const input = wrapper.get('[data-testid="settings-global-shortcut-input"]');
+        await input.trigger('focus');
+        await flushPromises();
+
+        window.dispatchEvent(
+            new KeyboardEvent('keydown', { key: ' ', code: 'Space', metaKey: true })
+        );
+        await flushPromises();
+
+        expect(nativeMock.shortcut.registerGlobalShortcut).not.toHaveBeenCalled();
+        expect(settingsStoreMock.updateGlobalShortcut).not.toHaveBeenCalled();
+        expect((input.element as HTMLInputElement).value).toBe('Option+Space');
+
+        await input.trigger('focus');
+        await flushPromises();
+        window.dispatchEvent(
+            new KeyboardEvent('keydown', { key: ' ', code: 'Space', ctrlKey: true })
+        );
+        await flushPromises();
+
+        expect(nativeMock.shortcut.registerGlobalShortcut).not.toHaveBeenCalled();
+        expect(settingsStoreMock.updateGlobalShortcut).not.toHaveBeenCalled();
+        expect((input.element as HTMLInputElement).value).toBe('Option+Space');
     });
 
     it('saves the global shortcut immediately after a shortcut is pressed', async () => {
