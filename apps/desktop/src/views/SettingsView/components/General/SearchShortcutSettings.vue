@@ -16,6 +16,7 @@
         findShortcutConflict,
         formatShortcutForDisplay,
         hasCommandModifier,
+        isMacPlatform,
         isModifierlessFunctionShortcut,
         isReservedLocalShortcut,
         isReservedLocalShortcutKey,
@@ -214,6 +215,12 @@
         alertMessage.value?.error(t(messageKey, params), 3000);
     }
 
+    function isModifierOnlyKey(key: string) {
+        return (
+            key === 'Control' || key === 'Alt' || key === 'Shift' || key === 'Meta' || key === 'OS'
+        );
+    }
+
     const captureSearchShortcut = (event: KeyboardEvent) => {
         const actionId = activeSearchShortcutActionId.value;
         if (!actionId) {
@@ -226,9 +233,26 @@
 
         const captured = captureShortcutFromKeyboardEvent(event);
         if (!captured) {
-            if (event.metaKey) {
-                alertMessage.value?.warning(t('settings.general.winKeyUnsupported'), 3000);
+            if (isModifierOnlyKey(event.key)) {
+                return;
             }
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (!isMacPlatform() && event.metaKey) {
+                alertMessage.value?.warning(t('settings.general.winKeyUnsupported'), 3000);
+                return;
+            }
+
+            reportSearchShortcutError(
+                actionId,
+                'settings.general.searchShortcuts.errors.unsupported'
+            );
+            updateSearchShortcutDisplay(
+                actionId,
+                formatSearchShortcutForSettings(settings.value.searchKeybindings[actionId])
+            );
             return;
         }
 

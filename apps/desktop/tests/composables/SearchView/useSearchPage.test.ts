@@ -329,6 +329,18 @@ describe('useSearchPageLifecycle', () => {
 
         await flushLifecycle();
 
+        const commandListenerCallIndex = eventServiceMock.on.mock.calls.findIndex(
+            ([eventName]) => eventName === AppEvent.SEARCH_SURFACE_COMMAND
+        );
+        const commandListenerOrder =
+            eventServiceMock.on.mock.invocationCallOrder[commandListenerCallIndex];
+        const firstShortcutSyncOrder =
+            nativeMock.shortcut.setSearchSurfaceShortcuts.mock.invocationCallOrder[0];
+        expect(commandListenerCallIndex).toBeGreaterThanOrEqual(0);
+        expect(commandListenerOrder).toBeDefined();
+        expect(firstShortcutSyncOrder).toBeDefined();
+        expect(commandListenerOrder!).toBeLessThan(firstShortcutSyncOrder!);
+
         expect(nativeMock.shortcut.setSearchSurfaceShortcuts).toHaveBeenCalledWith(
             expect.arrayContaining([
                 {

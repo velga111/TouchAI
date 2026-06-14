@@ -48,6 +48,8 @@ describe('shortcut utilities', () => {
         expect(normalizeLocalShortcutString('Ctrl+DefinitelyNotAKey')).toBeNull();
         expect(normalizeLocalShortcutString('Ctrl+DefinitelyNotAKey+A')).toBeNull();
         expect(normalizeLocalShortcutString('Ctrl++A')).toBeNull();
+        expect(normalizeLocalShortcutString('Ctrl+@')).toBeNull();
+        expect(normalizeLocalShortcutString('F13')).toBeNull();
         expect(normalizeLocalShortcutString('F25')).toBeNull();
         expect(normalizeLocalShortcutString('   ')).toBeNull();
 
@@ -75,6 +77,8 @@ describe('shortcut utilities', () => {
         expect(resolveKeyboardEventShortcutKey('BrightnessUp', 'F2')).toBe('F2');
         expect(resolveKeyboardEventShortcutKey('F2', 'F3')).toBe('F2');
         expect(resolveKeyboardEventShortcutKey('BrightnessUp', 'F25')).toBeNull();
+        expect(resolveKeyboardEventShortcutKey('BrightnessUp', 'F13')).toBeNull();
+        expect(resolveKeyboardEventShortcutKey('@')).toBeNull();
         expect(resolveKeyboardEventShortcutKey('x', 'Space')).toBe('X');
         expect(resolveKeyboardEventShortcutKey('BrightnessUp', 'Space')).toBeNull();
         expect(resolveKeyboardEventShortcutKey('', 'KeyA')).toBeNull();

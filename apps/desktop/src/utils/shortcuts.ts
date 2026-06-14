@@ -14,6 +14,21 @@ export interface CapturedShortcutResult {
 
 const MODIFIER_DISPLAY_ORDER = ['Mod', 'Ctrl', 'Alt', 'Shift'] as const;
 const SUPPORTED_CAPTURE_MODIFIERS = new Set(['Ctrl', 'Alt', 'Shift', 'Mod']);
+const SUPPORTED_CHARACTER_KEYS = new Set([
+    ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
+    ...'0123456789'.split(''),
+    ',',
+    '.',
+    '=',
+    '-',
+    ';',
+    '/',
+    "'",
+    '`',
+    '[',
+    ']',
+    '\\',
+]);
 const SUPPORTED_NON_CHARACTER_KEYS = new Set([
     'Backspace',
     'Del',
@@ -130,13 +145,14 @@ function normalizeShortcutToken(token: string): string | null {
     }
 
     if (trimmed.length === 1) {
-        return trimmed.toUpperCase();
+        const normalizedCharacter = trimmed.toUpperCase();
+        return SUPPORTED_CHARACTER_KEYS.has(normalizedCharacter) ? normalizedCharacter : null;
     }
 
     const functionKeyMatch = /^f(\d{1,2})$/i.exec(trimmed);
     if (functionKeyMatch) {
         const functionKeyNumber = Number(functionKeyMatch[1]);
-        return functionKeyNumber >= 1 && functionKeyNumber <= 24 ? trimmed.toUpperCase() : null;
+        return functionKeyNumber >= 1 && functionKeyNumber <= 12 ? trimmed.toUpperCase() : null;
     }
 
     if (SUPPORTED_NON_CHARACTER_KEYS.has(trimmed)) {

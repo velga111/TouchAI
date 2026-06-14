@@ -643,10 +643,25 @@ export function useSearchPageLifecycle(options: UseSearchPageLifecycleOptions) {
         }
         await syncWindowPinStateSafely('initialize');
         await initFocusListener();
+        startSearchSurfaceShortcutSync();
         if (!(await isE2eTestMode())) {
             await initNotificationPermission();
         }
         await runStartupTasks();
+    }
+
+    function startSearchSurfaceShortcutSync() {
+        if (!searchKeybindings || stopSearchSurfaceShortcutWatch) {
+            return;
+        }
+
+        stopSearchSurfaceShortcutWatch = watch(
+            searchKeybindings,
+            () => {
+                void syncSearchSurfaceShortcutsSafely();
+            },
+            { deep: true, immediate: true, flush: 'post' }
+        );
     }
 
     async function initFocusListener() {
@@ -766,16 +781,6 @@ export function useSearchPageLifecycle(options: UseSearchPageLifecycleOptions) {
             },
             { immediate: true, flush: 'sync' }
         );
-
-        if (searchKeybindings) {
-            stopSearchSurfaceShortcutWatch = watch(
-                searchKeybindings,
-                () => {
-                    void syncSearchSurfaceShortcutsSafely();
-                },
-                { deep: true, immediate: true, flush: 'post' }
-            );
-        }
 
         if (viewReady.value) {
             void startLifecycleOnceReady();
@@ -1113,4 +1118,8 @@ export function useSearchKeyboard(options: UseSearchKeyboardOptions) {
         document.removeEventListener('mousedown', handleSearchWindowMouseDown, true);
         document.body.removeEventListener('click', handleSearchWindowClick);
     });
+
+    return {
+        routeSearchSurfaceShortcut: handleKeyDown.routeSearchSurfaceShortcut,
+    };
 }

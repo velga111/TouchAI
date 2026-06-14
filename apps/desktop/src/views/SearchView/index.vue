@@ -434,6 +434,8 @@
         }
     }
 
+    let routeSearchSurfaceShortcut: ((shortcut: string) => boolean) | null = null;
+
     const { hideSearchWindow } = useSearchPageLifecycle({
         controller,
         viewReady,
@@ -451,11 +453,8 @@
         handleSessionStatusReminderAction,
         handleAiModelsUpdated,
         handleShortcutAutoPaste: tryShortcutAutoPaste,
-        handleSearchSurfaceCommand: async (payload) => {
-            if (!viewReady.value) {
-                return;
-            }
-            await handleSearchKeybindingAction(payload.actionId);
+        handleSearchSurfaceCommand: (payload) => {
+            routeSearchSurfaceShortcut?.(payload.shortcut);
         },
     });
 
@@ -545,7 +544,7 @@
         return 'navigated';
     }
 
-    useSearchKeyboard({
+    const searchKeyboard = useSearchKeyboard({
         viewReady,
         searchKeybindings,
         queryText,
@@ -584,6 +583,7 @@
         cancelRequest,
         clearSession: clearSessionToIdle,
     });
+    routeSearchSurfaceShortcut = searchKeyboard.routeSearchSurfaceShortcut;
 
     function handleQueryTextChange(value: string) {
         queryText.value = value;

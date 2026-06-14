@@ -138,19 +138,30 @@ pub fn set_search_surface_shortcuts(
     entries: Vec<SearchSurfaceShortcutEntry>,
 ) -> Result<(), String> {
     let mut parsed_entries = Vec::with_capacity(entries.len());
+    let mut parse_errors = Vec::new();
     for entry in entries {
-        parsed_entries.push(SearchSurfaceShortcut {
-            parsed: parse_shortcut(&entry.shortcut)?,
-            action_id: entry.action_id,
-            shortcut: entry.shortcut,
-        });
+        match parse_shortcut(&entry.shortcut) {
+            Ok(parsed) => parsed_entries.push(SearchSurfaceShortcut {
+                parsed,
+                action_id: entry.action_id,
+                shortcut: entry.shortcut,
+            }),
+            Err(error) => parse_errors.push(format!("{}: {}", entry.action_id, error)),
+        }
     }
 
     let mut shortcuts = SEARCH_SURFACE_SHORTCUTS
         .lock()
         .map_err(|_| "Failed to lock search surface shortcuts".to_string())?;
     *shortcuts = parsed_entries;
-    Ok(())
+    if parse_errors.is_empty() {
+        Ok(())
+    } else {
+        Err(format!(
+            "Ignored unsupported search surface shortcuts: {}",
+            parse_errors.join("; ")
+        ))
+    }
 }
 
 pub fn find_search_surface_command_for_windows_accelerator(
@@ -411,6 +422,9 @@ pub fn parse_shortcut(shortcut_str: &str) -> Result<Shortcut, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Mutex;
+
+    static SEARCH_SURFACE_SHORTCUT_TEST_LOCK: Mutex<()> = Mutex::new(());
 
     #[test]
     fn parse_shortcut_accepts_ctrl_alias() {
@@ -488,6 +502,7 @@ mod tests {
 
     #[test]
     fn search_surface_command_matches_windows_accelerator() {
+        let _guard = SEARCH_SURFACE_SHORTCUT_TEST_LOCK.lock().expect("test lock");
         set_search_surface_shortcuts(vec![
             SearchSurfaceShortcutEntry {
                 action_id: "search.model.toggle".to_string(),
@@ -515,5 +530,45 @@ mod tests {
             0x4D, false, false, false, false
         )
         .is_none());
+    }
+
+    #[test]
+    fn search_surface_shortcut_sync_drops_invalid_entries_without_retaining_old_commands() {
+        let _guard = SEARCH_SURFACE_SHORTCUT_TEST_LOCK.lock().expect("test lock");
+        set_search_surface_shortcuts(vec![SearchSurfaceShortcutEntry {
+            action_id: "search.model.toggle".to_string(),
+            shortcut: "Mod+M".to_string(),
+        }])
+        .expect("initial shortcut sync");
+
+        let result = set_search_surface_shortcuts(vec![
+            SearchSurfaceShortcutEntry {
+                action_id: "search.model.toggle".to_string(),
+                shortcut: "Mod+F13".to_string(),
+            },
+            SearchSurfaceShortcutEntry {
+                action_id: "search.settings.open".to_string(),
+                shortcut: "Mod+,".to_string(),
+            },
+        ]);
+
+        assert!(result.is_err());
+        assert!(find_search_surface_command_for_windows_accelerator(
+            0x4D,
+            !cfg!(target_os = "macos"),
+            false,
+            false,
+            cfg!(target_os = "macos"),
+        )
+        .is_none());
+        let command = find_search_surface_command_for_windows_accelerator(
+            0xBC,
+            !cfg!(target_os = "macos"),
+            false,
+            false,
+            cfg!(target_os = "macos"),
+        )
+        .expect("valid shortcut remains synced");
+        assert_eq!(command.action_id, "search.settings.open");
     }
 }

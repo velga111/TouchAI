@@ -72,6 +72,58 @@ function createControllerStub() {
     } satisfies SearchPageController;
 }
 
+function createSearchKeydownHandlerForTest(
+    overrides: Partial<Parameters<typeof createSearchKeydownHandler>[0]> = {}
+) {
+    const controller = createControllerStub();
+    return createSearchKeydownHandler({
+        viewReady: ref(true),
+        searchKeybindings: ref(createDefaultSearchKeybindings()),
+        queryText: ref(''),
+        attachments: ref([]),
+        cursorContext: ref<SearchCursorContext>({
+            isMultiLine: false,
+            cursorAtStart: true,
+            cursorAtTextStart: true,
+            cursorAtEnd: true,
+        }),
+        modelOverride: ref<SearchModelOverride>({
+            modelId: null,
+            providerId: null,
+        }),
+        modelDropdownState: ref({ isOpen: false }),
+        controller,
+        sessionHistory: ref([]),
+        pendingRequest: ref(null),
+        isWaitingForCompletion: ref(false),
+        isLoading: ref(false),
+        pendingToolApproval: ref(null),
+        approvePendingToolApproval: vi.fn(() => false),
+        rejectPendingToolApproval: vi.fn(() => false),
+        promptPendingToolApprovalAttention: vi.fn(),
+        getActivePopupType: () => null,
+        hasActivePopupWindowFocus: () => false,
+        isQuickSearchOpen: computed(() => false),
+        shouldTriggerQuickSearch: () => false,
+        sessionHistoryPopupOpen: ref(false),
+        hideAllPopups: vi.fn().mockResolvedValue(undefined),
+        hideSearchWindow: vi.fn().mockResolvedValue(undefined),
+        navigateInputHistory: vi.fn(() => 'ignored' as const),
+        closeModelDropdown: vi.fn().mockResolvedValue(undefined),
+        toggleModelDropdown: vi.fn().mockResolvedValue(undefined),
+        openHistoryDialog: vi.fn().mockResolvedValue(undefined),
+        startNewSession: vi.fn().mockResolvedValue(undefined),
+        reopenLastClosedSession: vi.fn().mockResolvedValue(undefined),
+        toggleWindowPin: vi.fn().mockResolvedValue(undefined),
+        toggleWindowMaximize: vi.fn().mockResolvedValue(undefined),
+        openSettingsWindow: vi.fn().mockResolvedValue(undefined),
+        handleSubmit: vi.fn().mockResolvedValue(undefined),
+        cancelRequest: vi.fn(),
+        clearSession: vi.fn(),
+        ...overrides,
+    });
+}
+
 describe('extractSessionInputHistoryEntries', () => {
     it('returns only user prompts that still have visible input history content', () => {
         const entries = extractSessionInputHistoryEntries([
@@ -295,6 +347,35 @@ describe('useQuickSearchCoordinator', () => {
 });
 
 describe('createSearchKeydownHandler', () => {
+    it('routes host accelerator shortcuts through the same search keyboard guards', async () => {
+        const handleSearchKeybindingAction = vi.fn().mockResolvedValue(undefined);
+        const handleKeyDown = createSearchKeydownHandlerForTest({
+            handleSearchKeybindingAction,
+        });
+
+        expect(handleKeyDown.routeSearchSurfaceShortcut('Mod+M')).toBe(true);
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(handleSearchKeybindingAction).toHaveBeenCalledWith('search.model.toggle');
+    });
+
+    it('ignores host accelerator shortcuts while the quick search context menu is open', async () => {
+        const controller = createControllerStub();
+        controller.isQuickSearchContextMenuOpen.mockReturnValue(true);
+        const handleSearchKeybindingAction = vi.fn().mockResolvedValue(undefined);
+        const handleKeyDown = createSearchKeydownHandlerForTest({
+            controller,
+            handleSearchKeybindingAction,
+        });
+
+        expect(handleKeyDown.routeSearchSurfaceShortcut('Mod+M')).toBe(false);
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(handleSearchKeybindingAction).not.toHaveBeenCalled();
+    });
+
     it('routes the default F11 maximize shortcut to the maximize callback', async () => {
         const controller = createControllerStub();
         const toggleWindowMaximize = vi.fn().mockResolvedValue(undefined);

@@ -112,6 +112,8 @@ describe('search keybinding configuration', () => {
                 'search.input.focus': false,
                 'search.model.toggle': 'Ctrl+DefinitelyNotAKey',
                 'search.window.pin': 'Ctrl+DefinitelyNotAKey+P',
+                'search.window.maximize': 'F13',
+                'search.settings.open': 'Ctrl+@',
             })
         ).toEqual(defaults);
     });

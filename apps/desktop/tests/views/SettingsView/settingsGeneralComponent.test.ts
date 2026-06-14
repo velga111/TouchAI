@@ -66,6 +66,12 @@ const nativeMock = vi.hoisted(() => ({
     },
 }));
 
+const alertMessageMock = vi.hoisted(() => ({
+    success: vi.fn(),
+    error: vi.fn(),
+    warning: vi.fn(),
+}));
+
 vi.mock('pinia', () => ({
     storeToRefs: (store: typeof settingsStoreMock) => ({
         settings: store.settings,
@@ -89,9 +95,9 @@ vi.mock('@components/AlertMessage.vue', () => ({
         name: 'AlertMessageStub',
         template: '<div />',
         methods: {
-            success: vi.fn(),
-            error: vi.fn(),
-            warning: vi.fn(),
+            success: alertMessageMock.success,
+            error: alertMessageMock.error,
+            warning: alertMessageMock.warning,
         },
     },
 }));
@@ -582,6 +588,12 @@ describe('SettingsGeneralSection', () => {
         expect(settingsStoreMock.updateSearchKeybindings).not.toHaveBeenCalled();
         expect((input.element as HTMLInputElement).value).toBe('Ctrl+H');
 
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'F13' }));
+        await flushPromises();
+
+        expect(settingsStoreMock.updateSearchKeybindings).not.toHaveBeenCalled();
+        expect((input.element as HTMLInputElement).value).toBe('Ctrl+H');
+
         window.dispatchEvent(new KeyboardEvent('keydown', { key: 'F1' }));
         await flushPromises();
 
@@ -589,6 +601,31 @@ describe('SettingsGeneralSection', () => {
             ...settingsStoreMock.settings.value.searchKeybindings,
             'search.history.open': 'F1',
         });
+    });
+
+    it('reports unsupported mac command search shortcuts without showing the Windows key warning', async () => {
+        setPlatform('MacIntel');
+        const wrapper = mount(GeneralSection);
+
+        await flushPromises();
+
+        const input = wrapper.get(
+            '[data-testid="settings-search-shortcut-input-search.history.open"]'
+        );
+        await input.trigger('focus');
+        await flushPromises();
+        alertMessageMock.error.mockClear();
+        alertMessageMock.warning.mockClear();
+
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: '@', metaKey: true }));
+        await flushPromises();
+
+        expect(settingsStoreMock.updateSearchKeybindings).not.toHaveBeenCalled();
+        expect(alertMessageMock.warning).not.toHaveBeenCalled();
+        expect(alertMessageMock.error).toHaveBeenCalledTimes(1);
+        expect((input.element as HTMLInputElement).value).toBe('Cmd+H');
+
+        wrapper.unmount();
     });
 
     it('shows fixed search shortcuts as unsupported for editing', async () => {

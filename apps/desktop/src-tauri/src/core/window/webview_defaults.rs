@@ -209,6 +209,7 @@ fn register_system_menu_accelerator_handler<R: Runtime>(
     controller: &ICoreWebView2Controller,
 ) -> Result<(), String> {
     let app_handle = window.app_handle().clone();
+    let search_surface_window = (window.label() == "main").then(|| window.clone());
     let mut token = 0i64;
     let handler = AcceleratorKeyPressedEventHandler::create(Box::new(
         move |_controller: Option<ICoreWebView2Controller>,
@@ -228,6 +229,10 @@ fn register_system_menu_accelerator_handler<R: Runtime>(
                     if !is_accelerator_key_down_event(key_event_kind.0) {
                         return Ok(());
                     }
+
+                    let Some(search_surface_window) = &search_surface_window else {
+                        return Ok(());
+                    };
 
                     let is_ctrl_down = (GetKeyState(i32::from(VK_CONTROL.0)) as u16 & 0x8000) != 0;
                     let is_alt_down = (GetKeyState(i32::from(VK_MENU.0)) as u16 & 0x8000) != 0;
@@ -253,7 +258,7 @@ fn register_system_menu_accelerator_handler<R: Runtime>(
                         let _ = args2.SetIsBrowserAcceleratorKeyEnabled(false);
                     }
                     let _ = args.SetHandled(true);
-                    let _ = app_handle.emit("search-surface-command", command);
+                    let _ = search_surface_window.emit("search-surface-command", command);
                     return Ok(());
                 }
 

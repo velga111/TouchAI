@@ -1,5 +1,5 @@
 import type { SearchKeybindingActionId, SearchKeybindings } from '@/config/searchKeybindings';
-import { matchShortcut } from '@/utils/shortcuts';
+import { matchShortcut, normalizeLocalShortcutString } from '@/utils/shortcuts';
 
 export type SearchPopupSurfaceType = 'model-dropdown-surface' | 'session-history-surface';
 type SearchKeyboardSurface = 'search-surface' | SearchPopupSurfaceType;
@@ -104,6 +104,28 @@ function resolveSearchKeybindingAction(
     return null;
 }
 
+function resolveSearchKeybindingActionByShortcut(
+    shortcut: string,
+    keybindings: SearchKeybindings
+): SearchKeybindingActionId | null {
+    const normalizedShortcut = normalizeLocalShortcutString(shortcut);
+    if (!normalizedShortcut) {
+        return null;
+    }
+
+    for (const [actionId, candidate] of Object.entries(keybindings) as Array<
+        [SearchKeybindingActionId, string | null]
+    >) {
+        if (normalizeLocalShortcutString(candidate) !== normalizedShortcut) {
+            continue;
+        }
+
+        return actionId;
+    }
+
+    return null;
+}
+
 /**
  * 纯键盘语义路由器。
  */
@@ -148,6 +170,24 @@ export function createSearchKeyboardRouter(options: CreateSearchKeyboardRouterOp
         onSearchKeybindingAction,
     } = options;
 
+    function routeSearchKeybindingAction(actionId: SearchKeybindingActionId) {
+        if (hasActivePopupWindowFocus()) {
+            return true;
+        }
+
+        runKeyboardEffect(() => onSearchKeybindingAction(actionId));
+        return true;
+    }
+
+    function routeShortcut(shortcut: string) {
+        const actionId = resolveSearchKeybindingActionByShortcut(shortcut, getSearchKeybindings());
+        if (!actionId) {
+            return false;
+        }
+
+        return routeSearchKeybindingAction(actionId);
+    }
+
     function route(input: SearchKeyboardRouteInput) {
         const queryText = getQueryText();
         const pendingApproval = getPendingApproval();
@@ -178,8 +218,7 @@ export function createSearchKeyboardRouter(options: CreateSearchKeyboardRouterOp
 
         const searchKeybindingAction = resolveSearchKeybindingAction(input, getSearchKeybindings());
         if (searchKeybindingAction) {
-            runKeyboardEffect(() => onSearchKeybindingAction(searchKeybindingAction));
-            return true;
+            return routeSearchKeybindingAction(searchKeybindingAction);
         }
 
         if (input.key === 'Escape' || input.key === 'Esc') {
@@ -331,5 +370,6 @@ export function createSearchKeyboardRouter(options: CreateSearchKeyboardRouterOp
 
     return {
         route,
+        routeShortcut,
     };
 }

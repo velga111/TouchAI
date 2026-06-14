@@ -143,6 +143,10 @@ export interface UseSearchKeyboardOptions {
     clearSession: () => void;
 }
 
+export type SearchKeydownHandler = ((event: KeyboardEvent) => Promise<void>) & {
+    routeSearchSurfaceShortcut: (shortcut: string) => boolean;
+};
+
 function createEmptyModelOverride(): SearchModelOverride {
     return {
         modelId: null,
@@ -644,7 +648,9 @@ export function useSearchOverlayMachine(options: UseSearchOverlayMachineOptions)
 /**
  * 创建 SearchView 页面级键盘处理器。
  */
-export function createSearchKeydownHandler(options: UseSearchKeyboardOptions) {
+export function createSearchKeydownHandler(
+    options: UseSearchKeyboardOptions
+): SearchKeydownHandler {
     const {
         viewReady,
         searchKeybindings,
@@ -821,7 +827,27 @@ export function createSearchKeydownHandler(options: UseSearchKeyboardOptions) {
 
     const askUserStore = useAskUserStore();
 
-    return async function handleKeyDown(event: KeyboardEvent) {
+    function shouldSkipSearchKeyboardRouting() {
+        if (!viewReady.value) {
+            return true;
+        }
+
+        if (askUserStore.current) {
+            return true;
+        }
+
+        return controller.isQuickSearchContextMenuOpen();
+    }
+
+    function routeSearchSurfaceShortcut(shortcut: string) {
+        if (shouldSkipSearchKeyboardRouting()) {
+            return false;
+        }
+
+        return keyboardRouter.routeShortcut(shortcut);
+    }
+
+    async function handleKeyDown(event: KeyboardEvent) {
         if (!viewReady.value) {
             return;
         }
@@ -877,5 +903,9 @@ export function createSearchKeydownHandler(options: UseSearchKeyboardOptions) {
                 modelOverride.value = createEmptyModelOverride();
             }
         }
-    };
+    }
+
+    return Object.assign(handleKeyDown, {
+        routeSearchSurfaceShortcut,
+    });
 }

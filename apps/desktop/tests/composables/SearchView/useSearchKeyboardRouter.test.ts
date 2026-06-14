@@ -180,6 +180,44 @@ describe('createSearchKeyboardRouter', () => {
         );
     });
 
+    it('routes host accelerator shortcuts through the current keybinding configuration', async () => {
+        const disabledRouter = createKeyboardRouter({
+            getSearchKeybindings: () => ({
+                ...createDefaultSearchKeybindings(),
+                'search.model.toggle': null,
+            }),
+        });
+
+        expect(disabledRouter.router.routeShortcut('Mod+M')).toBe(false);
+        await flushAsyncWork();
+        expect(disabledRouter.callbacks.onSearchKeybindingAction).not.toHaveBeenCalled();
+
+        const remappedRouter = createKeyboardRouter({
+            getSearchKeybindings: () => ({
+                ...createDefaultSearchKeybindings(),
+                'search.history.open': 'Mod+M',
+                'search.model.toggle': null,
+            }),
+        });
+
+        expect(remappedRouter.router.routeShortcut('Mod+M')).toBe(true);
+        await flushAsyncWork();
+        expect(remappedRouter.callbacks.onSearchKeybindingAction).toHaveBeenCalledWith(
+            'search.history.open'
+        );
+    });
+
+    it('swallows host accelerator shortcuts while a popup window has focus', async () => {
+        const { router, callbacks } = createKeyboardRouter({
+            hasActivePopupWindowFocus: () => true,
+        });
+
+        expect(router.routeShortcut('Mod+M')).toBe(true);
+        await flushAsyncWork();
+
+        expect(callbacks.onSearchKeybindingAction).not.toHaveBeenCalled();
+    });
+
     it('routes function-row search shortcuts by keyboard code when the key value is remapped', async () => {
         const { router, callbacks } = createKeyboardRouter({
             getSearchKeybindings: () => ({
